@@ -4,7 +4,6 @@
 
 #include "screen.h"
 
-
 uint8_t memory[4096] = { 0 };
 
 uint8_t font[80] = {
