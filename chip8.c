@@ -2,6 +2,9 @@
 #include "stdint.h"
 #include "string.h"
 
+#include "screen.h"
+
+
 uint8_t memory[4096] = { 0 };
 
 uint8_t font[80] = {
@@ -23,11 +26,20 @@ uint8_t font[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-int setupEmulator() {
+int emulatorInit() {
   memcpy(memory + 0x050, font, sizeof(font));
 
   printf("Info: Font initialized\n");
 
+  return 0;
+}
+
+int emulatorLoop() {
+  while (1) {
+    if (windowDraw() != 0) {
+      break;
+    }
+  }
   return 0;
 }
 
