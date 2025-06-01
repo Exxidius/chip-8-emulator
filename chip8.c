@@ -2,9 +2,8 @@
 #include "stdint.h"
 #include "string.h"
 
+#include "chip8.h"
 #include "screen.h"
-
-uint8_t memory[4096] = { 0 };
 
 uint8_t font[80] = {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -24,6 +23,16 @@ uint8_t font[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+
+uint8_t memory[4096] = { 0 };
+uint8_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT] = { 0 };
+uint8_t delay_timer = 0;
+uint8_t sound_timer = 0;
+uint8_t regs[16] = { 0 };
+
+uint16_t stack[STACK_SIZE] = { 0 };
+uint16_t PC = 0;
+uint16_t I = 0;
 
 int emulatorInit() {
   memcpy(memory + 0x050, font, sizeof(font));
