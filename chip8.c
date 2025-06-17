@@ -1,9 +1,10 @@
 #include "stdio.h"
-#include "stdint.h"
 #include "string.h"
+#include "stdlib.h"
 
 #include "chip8.h"
 #include "screen.h"
+#include "stack.h"
 
 uint8_t font[80] = {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -24,30 +25,51 @@ uint8_t font[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-uint8_t memory[4096] = { 0 };
-uint8_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT] = { 0 };
-uint8_t delay_timer = 0;
-uint8_t sound_timer = 0;
-uint8_t regs[16] = { 0 };
+int emulatorInit(Emulator* emulator) {
+  memset(emulator->memory, 0, MEMORY_SIZE);
+  memset(emulator->display, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
+  memset(emulator->regs, 0, NUMBER_REGS);
 
-uint16_t stack[STACK_SIZE] = { 0 };
-uint16_t PC = 0;
-uint16_t I = 0;
+  emulator->PC = 0;
+  emulator->I = 0;
 
-int emulatorInit() {
-  memcpy(memory + 0x050, font, sizeof(font));
+  emulator->delay_timer = 0;
+  emulator->sound_timer = 0;
 
-  printf("Info: Font initialized\n");
+  memcpy(emulator->memory + 0x050, font, sizeof(font));
 
+  emulator->call_stack = (Stack*) malloc(sizeof(Stack));
+  if (stackInit(emulator->call_stack) != 0) {
+    printf("Error: (emulatorInit) Could not initialize stack.\n");
+    return -1;
+  }
+
+  emulator->screen = (Screen*) malloc(sizeof(Screen));
+  if (screenInit(emulator->screen, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
+    printf("Error: (emulatorInit) Could not initialize screen.\n");
+    return -1;
+  }
+
+  printf("Info: (emulatorInit) Emulator initialized.\n");
   return 0;
 }
 
-int emulatorLoop() {
+int emulatorLoop(Emulator* emulator) {
   while (1) {
-    if (windowDraw() != 0) {
+    if (screenDraw(emulator->screen) != 0) {
       break;
     }
   }
+  return 0;
+}
+
+int emulatorCleanup(Emulator* emulator) {
+  free(emulator->call_stack);
+
+  screenCleanup(emulator->screen);
+  free(emulator->screen);
+
+  printf("Info: (emulatorCleanup) Emulator finished cleanup.\n");
   return 0;
 }
 

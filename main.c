@@ -3,14 +3,16 @@
 #include "string.h"
 
 #include "chip8.h"
-#include "screen.h"
 
-int  main(int argc, char* argv[]) {
-  printf("Info: Starting chip8 emulator...\n");
+int main(int argc, char* argv[]) {
+  printf("Info: (main) Starting chip8 emulator...\n");
 
-  emulatorInit();
+  Emulator emulator;
+  emulatorInit(&emulator);
 
-  windowInit(DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8);
+  int result = emulatorLoop(&emulator);
 
-  return emulatorLoop();
+  emulatorCleanup(&emulator);
+  printf("Info: (main) chip8 emulator finshed with code %d\n", result);
+  return result;
 }

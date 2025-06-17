@@ -1,50 +1,60 @@
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "screen.h"
 
-SDL_Window *window;
-SDL_Renderer *renderer;
-SDL_Surface *surface;
-SDL_Texture *texture;
-SDL_Event event;
-
-int windowInit(int width, int height)
+int screenInit(Screen* s, int width, int height)
 {
-  if (!SDL_Init(SDL_INIT_VIDEO)) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-    return 3;
+  int result = SDL_Init(SDL_INIT_VIDEO);
+
+  if (!result) {
+    printf("Error: (screenInit) Couldnt initialize SDL.\n");
+    return -3;
   }
 
-  if (!SDL_CreateWindowAndRenderer("Chip8 Emulator", width, height, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
-    return 3;
+  result = SDL_CreateWindowAndRenderer(
+    "Chip8 Emulator",
+    width,
+    height,
+    SDL_WINDOW_RESIZABLE,
+    &(s->window),
+    &(s->renderer)
+  );
+
+  if (!result) {
+    printf("Error: (screenInit) Couldn't create renderer.\n");
+    return -3;
   }
 
-  if (!SDL_SetWindowResizable(window, false)) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set window non resizable %s", SDL_GetError());
-    return 3;
+  result = SDL_SetWindowResizable(s->window, false);
+
+  if (!result) {
+    printf("Error: (screenInit) Couldn't set window non resizable.\n");
+    return -3;
   }
+
+  printf("Info: (screenInit) Screen initialized.\n");
+  return 0;
+}
+
+int screenDraw(Screen* s) {
+  SDL_PollEvent(&(s->event));
+  if ((s->event).type == SDL_EVENT_QUIT) {
+    printf("Info: (screenDraw) Window quit.\n");
+    return -1;
+  }
+
+  SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
+  SDL_RenderClear(s->renderer);
+  SDL_RenderPresent(s->renderer);
 
   return 0;
 }
 
-int windowDraw() {
-  SDL_PollEvent(&event);
-  if (event.type == SDL_EVENT_QUIT) {
-    return 1;
-  }
-  SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
-  SDL_RenderClear(renderer);
-  SDL_RenderPresent(renderer);
-
-  return 0;
-}
-
-int windowCleanup() {
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+int screenCleanup(Screen* s) {
+  SDL_DestroyRenderer(s->renderer);
+  SDL_DestroyWindow(s->window);
 
   SDL_Quit();
 
+  printf("Info: (screenCleanup) SDL finished cleanup.\n");
   return 0;
 }
 
