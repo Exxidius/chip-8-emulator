@@ -1,4 +1,5 @@
 #include "stdint.h"
+#include "time.h"
 
 #include "stack.h"
 #include "screen.h"
@@ -13,8 +14,8 @@
 
 #define NUMBER_REGS 16
 
-#define TIMER_TICKS_PER_SECOND 60
-#define INSTRUCTIONS_PER_SECOND 700
+#define TIMER_FREQUENCY 60
+#define INSTRUCTIONS_FREQUENCY 700
 
 typedef struct Emulator {
   uint8_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT];
@@ -29,11 +30,17 @@ typedef struct Emulator {
 
   Stack* call_stack;
   Screen* screen;
+
+  // Internal Variables
+  clock_t last_ticks_60Hz;
 } Emulator;
 
 int emulatorInit(Emulator* emulator);
 int emulatorLoop(Emulator* emulator);
 int emulatorCleanup(Emulator* emulator);
+int emulatorTimer60Hz(Emulator* emulator);
+
+void emulatorHandleTimer(Emulator* emulator);
 
 #endif
 

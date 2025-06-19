@@ -33,9 +33,6 @@ int emulatorInit(Emulator* emulator) {
   emulator->PC = 0;
   emulator->I = 0;
 
-  emulator->delay_timer = 0;
-  emulator->sound_timer = 0;
-
   memcpy(emulator->memory + 0x050, font, sizeof(font));
 
   emulator->call_stack = (Stack*) malloc(sizeof(Stack));
@@ -50,16 +47,61 @@ int emulatorInit(Emulator* emulator) {
     return -1;
   }
 
+  // Timer initialization
+  emulator->last_ticks_60Hz = clock();
+
+  emulator->delay_timer = 240;
+  emulator->sound_timer = 0;
+
+  getchar();
+
   printf("Info: (emulatorInit) Emulator initialized.\n");
   return 0;
 }
 
 int emulatorLoop(Emulator* emulator) {
   while (1) {
+    emulatorHandleTimer(emulator);
+
+    // TODO: outsource to function
     if (screenDraw(emulator->screen) != 0) {
       break;
     }
   }
+  return 0;
+}
+
+void emulatorHandleTimer(Emulator* emulator) {
+    int decrease = emulatorTimer60Hz(emulator);
+
+    if (decrease == 0) {
+      return;
+    }
+
+    if (emulator->delay_timer > 0) {
+      emulator->delay_timer--;
+      printf("Delay Timer is: %d\n", emulator->delay_timer);
+    }
+
+    if (emulator->sound_timer > 0) {
+      // TODO: make beep sound if > 0
+      emulator->sound_timer--;
+    }
+}
+
+int emulatorTimer60Hz(Emulator* emulator) {
+  clock_t ticks = clock();
+
+  double update_rate_ms = (double) 1000 / TIMER_FREQUENCY;
+
+  double diff = ((double)(ticks - emulator->last_ticks_60Hz));
+  diff = (diff * 1000) / CLOCKS_PER_SEC;
+
+  if (diff > update_rate_ms) {
+    emulator->last_ticks_60Hz = clock();
+    return 1;
+  }
+
   return 0;
 }
 
