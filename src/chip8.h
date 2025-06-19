@@ -1,5 +1,4 @@
 #include "stdint.h"
-#include "time.h"
 
 #include "stack.h"
 #include "screen.h"
@@ -32,13 +31,15 @@ typedef struct Emulator {
   Screen* screen;
 
   // Internal Variables
-  clock_t last_ticks_60Hz;
+  size_t last_time_60Hz;
 } Emulator;
 
 int emulatorInit(Emulator* emulator);
 int emulatorLoop(Emulator* emulator);
 int emulatorCleanup(Emulator* emulator);
 int emulatorTimer60Hz(Emulator* emulator);
+
+size_t emulatorCurrentTime_ms();
 
 void emulatorHandleTimer(Emulator* emulator);
 

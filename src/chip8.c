@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "time.h"
 
 #include "chip8.h"
 #include "screen.h"
@@ -48,7 +49,7 @@ int emulatorInit(Emulator* emulator) {
   }
 
   // Timer initialization
-  emulator->last_ticks_60Hz = clock();
+  emulator->last_time_60Hz = emulatorCurrentTime_ms();
 
   emulator->delay_timer = 0;
   emulator->sound_timer = 0;
@@ -78,7 +79,6 @@ void emulatorHandleTimer(Emulator* emulator) {
 
     if (emulator->delay_timer > 0) {
       emulator->delay_timer--;
-      printf("Delay Timer is: %d\n", emulator->delay_timer);
     }
 
     if (emulator->sound_timer > 0) {
@@ -88,16 +88,13 @@ void emulatorHandleTimer(Emulator* emulator) {
 }
 
 int emulatorTimer60Hz(Emulator* emulator) {
-  // TODO: this does not work yet
-  clock_t ticks = clock();
+  size_t now = emulatorCurrentTime_ms();
+  double diff = now - emulator->last_time_60Hz;
 
   double update_rate_ms = (double) 1000 / TIMER_FREQUENCY;
 
-  double diff = ((double)(ticks - emulator->last_ticks_60Hz));
-  diff = (diff * 1000) / CLOCKS_PER_SEC;
-
   if (diff > update_rate_ms) {
-    emulator->last_ticks_60Hz = clock();
+    emulator->last_time_60Hz = emulatorCurrentTime_ms();
     return 1;
   }
 
@@ -112,5 +109,12 @@ int emulatorCleanup(Emulator* emulator) {
 
   printf("Info: (emulatorCleanup) Emulator finished cleanup.\n");
   return 0;
+}
+
+// TODO: Maybe move to seperate file
+size_t emulatorCurrentTime_ms() {
+  struct timespec ts;
+  timespec_get(&ts, TIME_UTC);
+  return (long long)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
 }
 
