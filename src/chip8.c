@@ -50,10 +50,8 @@ int emulatorInit(Emulator* emulator) {
   // Timer initialization
   emulator->last_ticks_60Hz = clock();
 
-  emulator->delay_timer = 240;
+  emulator->delay_timer = 0;
   emulator->sound_timer = 0;
-
-  getchar();
 
   printf("Info: (emulatorInit) Emulator initialized.\n");
   return 0;
@@ -90,6 +88,7 @@ void emulatorHandleTimer(Emulator* emulator) {
 }
 
 int emulatorTimer60Hz(Emulator* emulator) {
+  // TODO: this does not work yet
   clock_t ticks = clock();
 
   double update_rate_ms = (double) 1000 / TIMER_FREQUENCY;

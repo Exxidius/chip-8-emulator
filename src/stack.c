@@ -5,7 +5,7 @@
 
 int stackInit(Stack* stack) {
   stack->top_idx = 0;
-  memset(stack->data, 0, STACK_SIZE);
+  memset(stack->data, 0, STACK_SIZE * sizeof(uint16_t));
   printf("Info: (stackInit) Initialized stack.\n");
   return 0;
 }

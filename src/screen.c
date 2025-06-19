@@ -1,3 +1,5 @@
+#include "stdio.h"
+
 #include "screen.h"
 
 int screenInit(Screen* s, int width, int height)
@@ -13,20 +15,13 @@ int screenInit(Screen* s, int width, int height)
     "Chip8 Emulator",
     width,
     height,
-    SDL_WINDOW_RESIZABLE,
+    SDL_WINDOW_ALWAYS_ON_TOP,
     &(s->window),
     &(s->renderer)
   );
 
   if (!result) {
     printf("Error: (screenInit) Couldn't create renderer.\n");
-    return -3;
-  }
-
-  result = SDL_SetWindowResizable(s->window, false);
-
-  if (!result) {
-    printf("Error: (screenInit) Couldn't set window non resizable.\n");
     return -3;
   }
 
