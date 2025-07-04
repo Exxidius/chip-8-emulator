@@ -42,7 +42,22 @@ int screenDraw(Screen* s, uint8_t pixels[]) {
 
   for (size_t x = 0; x < DISPLAY_WIDTH; x++) {
     for (size_t y = 0; y < DISPLAY_HEIGHT; y++) {
-      uint8_t color = pixels[y * DISPLAY_WIDTH + x];
+      uint8_t value = pixels[y * DISPLAY_WIDTH + x];
+
+      if (value > 0) {
+        SDL_SetRenderDrawColor(s->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+      } else {
+        SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
+      }
+
+      SDL_FRect r = {
+        x * 8,
+        y * 8,
+        8,
+        8
+      };
+
+      SDL_RenderFillRect(s->renderer, &r);
 
     }
   }

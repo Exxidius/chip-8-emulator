@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -Wall -std=c23 $(shell pkg-config --cflags sdl3)
+CFLAGS = -Wall -std=gnu23 $(shell pkg-config --cflags sdl3)
 LDFLAGS = $(shell pkg-config --libs sdl3)
 
 SRC = *.c
