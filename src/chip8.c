@@ -4,7 +4,7 @@
 #include "time.h"
 
 #include "chip8.h"
-#include "screen.h"
+#include "IO.h"
 #include "stack.h"
 
 uint8_t font[80] = {
@@ -42,34 +42,54 @@ int emulatorInit(Emulator* emulator) {
     return -1;
   }
 
-  emulator->screen = (Screen*) malloc(sizeof(Screen));
-  if (screenInit(emulator->screen, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
+  emulator->io = (IO*) malloc(sizeof(IO));
+  if (screenInit(emulator->io, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
     printf("Error: (emulatorInit) Could not initialize screen.\n");
     return -1;
   }
 
-  // Timer initialization
   emulator->last_time_60Hz = emulatorCurrentTime_ms();
 
   emulator->delay_timer = 0;
   emulator->sound_timer = 0;
 
   printf("Info: (emulatorInit) Emulator initialized.\n");
+
+  screenDraw(emulator->io, emulator->display);
+  emulator->running = 1;
+
   return 0;
 }
 
 int emulatorLoop(Emulator* emulator) {
-  while (1) {
+  while (emulator->running) {
     emulatorHandleTimer(emulator);
 
-    // TODO: outsource to function
-    if (screenDraw(emulator->screen, emulator->display) != 0) {
-      break;
-    }
+    emulatorFetch(emulator);
+    emulatorDecodeExecute(emulator);
 
     emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
+
+    if (IOPoll(emulator->io) != 0) {
+      emulator->running = 0;
+    }
   }
   return 0;
+}
+
+void emulatorFetch(Emulator* emulator) {
+  uint16_t* curr_inst = &emulator->current_instruction;
+  uint8_t* inst_ptr = &emulator->memory[emulator->PC];
+
+  memcpy(curr_inst, inst_ptr, sizeof(uint16_t));
+  emulator->PC += 0x2;
+
+  // TODO: REMOVE ME ONCE DECODE AND EXECUTE IS HERE
+  if (emulator->PC > MEMORY_SIZE) { emulator->PC = 0; }
+}
+
+void emulatorDecodeExecute(Emulator* emulator) {
+
 }
 
 void emulatorHandleTimer(Emulator* emulator) {
@@ -106,17 +126,17 @@ int emulatorTimer60Hz(Emulator* emulator) {
 int emulatorCleanup(Emulator* emulator) {
   free(emulator->call_stack);
 
-  screenCleanup(emulator->screen);
-  free(emulator->screen);
+  screenCleanup(emulator->io);
+  free(emulator->io);
 
   printf("Info: (emulatorCleanup) Emulator finished cleanup.\n");
   return 0;
 }
 
-// TODO: Maybe move to seperate file
 size_t emulatorCurrentTime_ms() {
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
+
   return (long long)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
 }
 
