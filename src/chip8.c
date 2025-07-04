@@ -63,7 +63,7 @@ int emulatorLoop(Emulator* emulator) {
     emulatorHandleTimer(emulator);
 
     // TODO: outsource to function
-    if (screenDraw(emulator->screen) != 0) {
+    if (screenDraw(emulator->screen, emulator->display) != 0) {
       break;
     }
 

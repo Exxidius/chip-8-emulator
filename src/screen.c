@@ -1,6 +1,7 @@
 #include "stdio.h"
 
 #include "screen.h"
+#include "chip8.h"
 
 int screenInit(Screen* s, int width, int height)
 {
@@ -29,7 +30,7 @@ int screenInit(Screen* s, int width, int height)
   return 0;
 }
 
-int screenDraw(Screen* s) {
+int screenDraw(Screen* s, uint8_t pixels[]) {
   SDL_PollEvent(&(s->event));
   if ((s->event).type == SDL_EVENT_QUIT) {
     printf("Info: (screenDraw) Window quit.\n");
@@ -38,6 +39,14 @@ int screenDraw(Screen* s) {
 
   SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(s->renderer);
+
+  for (size_t x = 0; x < DISPLAY_WIDTH; x++) {
+    for (size_t y = 0; y < DISPLAY_HEIGHT; y++) {
+      uint8_t color = pixels[y * DISPLAY_WIDTH + x];
+
+    }
+  }
+
   SDL_RenderPresent(s->renderer);
 
   return 0;
