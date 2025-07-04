@@ -66,6 +66,8 @@ int emulatorLoop(Emulator* emulator) {
     if (screenDraw(emulator->screen) != 0) {
       break;
     }
+
+    emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
   }
   return 0;
 }
@@ -116,5 +118,12 @@ size_t emulatorCurrentTime_ms() {
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
   return (long long)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
+}
+
+void emulatorSleep_ms(size_t ms) {
+  struct timespec req;
+  req.tv_sec = 0;
+  req.tv_nsec = 1000000 * ms;
+  nanosleep(&req, NULL);
 }
 

@@ -42,6 +42,7 @@ int emulatorTimer60Hz(Emulator* emulator);
 size_t emulatorCurrentTime_ms();
 
 void emulatorHandleTimer(Emulator* emulator);
+void emulatorSleep_ms(size_t ms);
 
 #endif
 
