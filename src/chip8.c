@@ -89,24 +89,78 @@ void emulatorFetch(Emulator* emulator) {
 }
 
 void emulatorDecodeExecute(Emulator* emulator) {
+  uint16_t first_nibble = emulator->current_instruction & 0xF000;
+  uint16_t second_nibble = emulator->current_instruction & 0x0F00;
+  uint16_t third_nibble = emulator->current_instruction & 0x00F0;
+  uint16_t fourth_nibble = emulator->current_instruction & 0x000F;
 
+  switch (first_nibble) {
+    case 0x0:
+
+      break;
+
+    case 0x1:
+      break;
+
+    case 0x2:
+      break;
+
+    case 0x3:
+      break;
+
+    case 0x4:
+      break;
+
+    case 0x5:
+      break;
+
+    case 0x6:
+      break;
+
+    case 0x7:
+      break;
+
+    case 0x8:
+      break;
+
+    case 0x9:
+      break;
+
+    case 0xA:
+      break;
+
+    case 0xB:
+      break;
+
+    case 0xC:
+      break;
+
+    case 0xD:
+      break;
+
+    case 0xE:
+      break;
+
+    case 0xF:
+      break;
+  }
 }
 
 void emulatorHandleTimer(Emulator* emulator) {
-    int decrease = emulatorTimer60Hz(emulator);
+  int decrease = emulatorTimer60Hz(emulator);
 
-    if (decrease == 0) {
-      return;
-    }
+  if (decrease == 0) {
+    return;
+  }
 
-    if (emulator->delay_timer > 0) {
-      emulator->delay_timer--;
-    }
+  if (emulator->delay_timer > 0) {
+    emulator->delay_timer--;
+  }
 
-    if (emulator->sound_timer > 0) {
-      // TODO: make beep sound if > 0
-      emulator->sound_timer--;
-    }
+  if (emulator->sound_timer > 0) {
+    // TODO: make beep sound if > 0
+    emulator->sound_timer--;
+  }
 }
 
 int emulatorTimer60Hz(Emulator* emulator) {
@@ -137,7 +191,7 @@ size_t emulatorCurrentTime_ms() {
   struct timespec ts;
   timespec_get(&ts, TIME_UTC);
 
-  return (long long)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
+  return (size_t)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
 }
 
 void emulatorSleep_ms(size_t ms) {
