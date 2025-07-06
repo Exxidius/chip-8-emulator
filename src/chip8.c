@@ -90,16 +90,26 @@ void emulatorFetch(Emulator* emulator) {
 
 void emulatorDecodeExecute(Emulator* emulator) {
   uint16_t first_nibble = emulator->current_instruction & 0xF000;
-  uint16_t second_nibble = emulator->current_instruction & 0x0F00;
-  uint16_t third_nibble = emulator->current_instruction & 0x00F0;
-  uint16_t fourth_nibble = emulator->current_instruction & 0x000F;
+  uint16_t X = emulator->current_instruction & 0x0F00;
+  uint16_t Y = emulator->current_instruction & 0x00F0;
+  uint16_t N = emulator->current_instruction & 0x000F;
+  uint16_t NN = emulator->current_instruction & 0x00FF;
+  uint16_t NNN = emulator->current_instruction & 0x0FFF;
 
   switch (first_nibble) {
     case 0x0:
+      switch (emulator->current_instruction) {
+        case 0x00E0:
+          memset(emulator->display, 0, DISPLAY_HEIGHT * DISPLAY_WIDTH);
+          break;
 
+        case 0x00EE:
+          break;
+      }
       break;
 
     case 0x1:
+      emulator->PC = NNN;
       break;
 
     case 0x2:
@@ -115,9 +125,11 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0x6:
+      emulator->regs[X] = NN;
       break;
 
     case 0x7:
+      emulator->regs[X] += NN;
       break;
 
     case 0x8:
@@ -127,6 +139,7 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0xA:
+      emulator->I = NNN;
       break;
 
     case 0xB:
