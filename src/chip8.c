@@ -171,7 +171,6 @@ void emulatorHandleTimer(Emulator* emulator) {
   }
 
   if (emulator->sound_timer > 0) {
-    // TODO: make beep sound if > 0
     emulator->sound_timer--;
   }
 }
