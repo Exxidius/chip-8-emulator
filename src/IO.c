@@ -34,8 +34,8 @@ void screenDraw(IO* io, uint8_t pixels[]) {
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(io->renderer);
 
-  for (size_t x = 0; x < DISPLAY_WIDTH; x++) {
-    for (size_t y = 0; y < DISPLAY_HEIGHT; y++) {
+  for (size_t y = 0; y < DISPLAY_HEIGHT; y++) {
+    for (size_t x = 0; x < DISPLAY_WIDTH; x++) {
       uint8_t value = pixels[y * DISPLAY_WIDTH + x];
 
       if (value > 0) {

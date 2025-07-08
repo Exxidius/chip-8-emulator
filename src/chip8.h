@@ -26,6 +26,8 @@ typedef struct Emulator {
 
   uint8_t running;
 
+  FILE* rom;
+
   uint16_t PC;
   uint16_t I;
 
@@ -38,13 +40,14 @@ typedef struct Emulator {
   size_t last_time_60Hz;
 } Emulator;
 
-int emulatorInit(Emulator* emulator);
+int emulatorInit(Emulator* emulator, char* rom_file);
 int emulatorLoop(Emulator* emulator);
 int emulatorCleanup(Emulator* emulator);
 int emulatorTimer60Hz(Emulator* emulator);
+int emulatorDecodeExecute(Emulator* emulator);
 
 void emulatorFetch(Emulator* emulator);
-void emulatorDecodeExecute(Emulator* emulator);
+void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
 
 size_t emulatorCurrentTime_ms();
 

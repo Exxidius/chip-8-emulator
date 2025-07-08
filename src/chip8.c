@@ -26,15 +26,23 @@ uint8_t font[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-int emulatorInit(Emulator* emulator) {
+int emulatorInit(Emulator* emulator, char* rom_file) {
   memset(emulator->memory, 0, MEMORY_SIZE);
   memset(emulator->display, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
   memset(emulator->regs, 0, NUMBER_REGS);
 
-  emulator->PC = 0;
+  emulator->PC = 0x200;
   emulator->I = 0;
 
   memcpy(emulator->memory + 0x050, font, sizeof(font));
+
+  emulator->rom = fopen(rom_file, "rb");
+  if (!emulator->rom) {
+    printf("Error: (emulatorInit) Could not open ROM file\n");
+    return -1;
+  }
+
+  fread(emulator->memory + 0x200, 1, MEMORY_SIZE - 0x200, emulator->rom);
 
   emulator->call_stack = (Stack*) malloc(sizeof(Stack));
   if (stackInit(emulator->call_stack) != 0) {
@@ -66,7 +74,11 @@ int emulatorLoop(Emulator* emulator) {
     emulatorHandleTimer(emulator);
 
     emulatorFetch(emulator);
-    emulatorDecodeExecute(emulator);
+
+    if (emulatorDecodeExecute(emulator) != 0) {
+      printf("Error: (emulatorLoop) Could not execute Instruction.\n");
+      return -1;
+    }
 
     emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
 
@@ -78,28 +90,33 @@ int emulatorLoop(Emulator* emulator) {
 }
 
 void emulatorFetch(Emulator* emulator) {
-  uint16_t* curr_inst = &emulator->current_instruction;
-  uint8_t* inst_ptr = &emulator->memory[emulator->PC];
+  uint8_t higher_byte = emulator->memory[emulator->PC];
+  uint8_t lower_byte = emulator->memory[emulator->PC + 0x1];
 
-  memcpy(curr_inst, inst_ptr, sizeof(uint16_t));
+  emulator->current_instruction = (higher_byte << 8) | lower_byte;
   emulator->PC += 0x2;
-
-  // TODO: REMOVE ME ONCE DECODE AND EXECUTE IS HERE
-  if (emulator->PC > MEMORY_SIZE) { emulator->PC = 0; }
 }
 
-void emulatorDecodeExecute(Emulator* emulator) {
-  uint16_t first_nibble = emulator->current_instruction & 0xF000;
-  uint16_t X = emulator->current_instruction & 0x0F00;
-  uint16_t Y = emulator->current_instruction & 0x00F0;
+int emulatorDecodeExecute(Emulator* emulator) {
+  uint16_t first_nibble = (emulator->current_instruction & 0xF000) >> 12;
+  uint16_t X = (emulator->current_instruction & 0x0F00) >> 8;
+  uint16_t Y = (emulator->current_instruction & 0x00F0) >> 4;
   uint16_t N = emulator->current_instruction & 0x000F;
   uint16_t NN = emulator->current_instruction & 0x00FF;
   uint16_t NNN = emulator->current_instruction & 0x0FFF;
+
+  printf(
+    "Info: (emulatorExecute) Current instruction is %04X.\n",
+    emulator->current_instruction
+  );
+
+  getchar();
 
   switch (first_nibble) {
     case 0x0:
       switch (emulator->current_instruction) {
         case 0x00E0:
+          printf("Info: (emulatorExecute) Clear screen\n");
           memset(emulator->display, 0, DISPLAY_HEIGHT * DISPLAY_WIDTH);
           break;
 
@@ -109,6 +126,7 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0x1:
+      printf("Info: (emulatorExecute) Jump to %X\n", NNN);
       emulator->PC = NNN;
       break;
 
@@ -125,10 +143,12 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0x6:
+      printf("Info: (emulatorExecute) Set register %X to %X\n", X, NN);
       emulator->regs[X] = NN;
       break;
 
     case 0x7:
+      printf("Info: (emulatorExecute) Add %X to register %X\n", NN, X);
       emulator->regs[X] += NN;
       break;
 
@@ -139,6 +159,7 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0xA:
+      printf("Info: (emulatorExecute) Set I to %X\n", NNN);
       emulator->I = NNN;
       break;
 
@@ -149,6 +170,8 @@ void emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0xD:
+      printf("Info: (emulatorExecute) Display sprite\n");
+      emulatorDisplay(emulator, X, Y, N);
       break;
 
     case 0xE:
@@ -156,7 +179,51 @@ void emulatorDecodeExecute(Emulator* emulator) {
 
     case 0xF:
       break;
+
+    default:
+      printf("Error: (emulatorExecute) Not a valid instruction. Aborting.\n");
+      return -1;
   }
+  return 0;
+}
+
+void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
+  uint16_t disp_x = emulator->regs[X] % DISPLAY_WIDTH;
+  uint16_t disp_y = emulator->regs[Y] % DISPLAY_HEIGHT;
+
+  emulator->regs[NUMBER_REGS - 1] = 0;
+
+  for (size_t i = 0; i < N; i++) {
+    uint8_t byte = emulator->memory[emulator->I + i];
+
+    for (size_t byte_i = 7; byte_i >= 0; byte_i--) {
+      uint8_t mask = 1 << byte_i;
+      uint8_t bit = (byte & mask) >> byte_i;
+
+      size_t screen_offset = disp_y * DISPLAY_HEIGHT + disp_x;
+
+      if (bit == 1 && emulator->display[screen_offset] == 1) {
+        emulator->regs[NUMBER_REGS - 1] = 1;
+      }
+
+      emulator->display[screen_offset] ^= bit;
+
+      if (disp_x == DISPLAY_WIDTH - 1) {
+        break;
+      }
+
+      disp_x++;
+    }
+
+    if (disp_y == DISPLAY_HEIGHT - 1) {
+      break;
+    }
+
+    disp_x = emulator->regs[X] % DISPLAY_WIDTH;
+    disp_y++;
+  }
+
+  screenDraw(emulator->io, emulator->display);
 }
 
 void emulatorHandleTimer(Emulator* emulator) {
