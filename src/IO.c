@@ -8,7 +8,7 @@ int screenInit(IO* io, int width, int height)
   int result = SDL_Init(SDL_INIT_VIDEO);
 
   if (!result) {
-    printf("Error: (screenInit) Couldnt initialize SDL.\n");
+    debugPrintf("Error: (screenInit) Couldnt initialize SDL.\n");
     return -3;
   }
 
@@ -22,11 +22,11 @@ int screenInit(IO* io, int width, int height)
   );
 
   if (!result) {
-    printf("Error: (screenInit) Couldn't create renderer.\n");
+    debugPrintf("Error: (screenInit) Couldn't create renderer.\n");
     return -3;
   }
 
-  printf("Info: (screenInit) IO initialized.\n");
+  debugPrintf("Info: (screenInit) IO initialized.\n");
   return 0;
 }
 
@@ -57,7 +57,7 @@ int screenCleanup(IO* io) {
 
   SDL_Quit();
 
-  printf("Info: (screenCleanup) SDL finished cleanup.\n");
+  debugPrintf("Info: (screenCleanup) SDL finished cleanup.\n");
   return 0;
 }
 
@@ -67,7 +67,7 @@ int IOPoll(IO* io) {
 
   switch (io->event.type) {
     case SDL_EVENT_QUIT:
-      printf("Info: (IOPoll) Window quit.\n");
+      debugPrintf("Info: (IOPoll) Window quit.\n");
       result = -1;
       break;
 

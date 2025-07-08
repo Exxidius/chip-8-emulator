@@ -1,4 +1,6 @@
 #include "stdint.h"
+#include "stdlib.h"
+#include "stdio.h"
 
 #include "stack.h"
 #include "IO.h"
@@ -8,11 +10,8 @@
 
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
-
 #define MEMORY_SIZE 4096
-
 #define NUMBER_REGS 16
-
 #define TIMER_FREQUENCY 60
 #define INSTRUCTIONS_FREQUENCY 700
 
@@ -53,6 +52,8 @@ size_t emulatorCurrentTime_ms();
 
 void emulatorHandleTimer(Emulator* emulator);
 void emulatorSleep_ms(size_t ms);
+
+int debugPrintf(const char* format, ...);
 
 #endif
 
