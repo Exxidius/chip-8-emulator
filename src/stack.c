@@ -16,6 +16,7 @@ int stackPush(Stack* stack, uint16_t e) {
     return -1;
   }
 
+  debugPrintf("Info: (stackPush) Pushed %X.\n", e);
   stack->data[++stack->top_idx] = e;
   return e;
 }
@@ -26,6 +27,9 @@ int stackPop(Stack* stack) {
     return -1;
   }
 
-  return stack->data[stack->top_idx--];
+  uint16_t e = stack->data[stack->top_idx--];
+  debugPrintf("Info: (stackPush) Popped %X.\n", e);
+
+  return e;
 }
 

@@ -122,7 +122,13 @@ int emulatorDecodeExecute(Emulator* emulator) {
           break;
 
         case 0x00EE:
+          debugPrintf("Info: (emulatorExecute) Jump to %X.\n", emulator->PC);
+          emulator->PC = stackPop(emulator->call_stack);
           break;
+
+        default:
+          debugPrintf("Error: (emulatorExecute) Not a valid instruction. Aborting.\n");
+          return -1;
       }
       break;
 
@@ -132,15 +138,30 @@ int emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0x2:
+      debugPrintf("Info: (emulatorExecute) Calling to %X.\n", emulator->PC);
+      stackPush(emulator->call_stack, emulator->PC);
+      emulator->PC = NNN;
       break;
 
     case 0x3:
+      if (emulator->regs[X] == NN) {
+        debugPrintf("Info: (emulatorExecute) Skipping VX == NN.\n");
+        emulator->PC += 0x2;
+      }
       break;
 
     case 0x4:
+      if (emulator->regs[X] != NN) {
+        debugPrintf("Info: (emulatorExecute) Skipping VX != NN.\n");
+        emulator->PC += 0x2;
+      }
       break;
 
     case 0x5:
+      if (emulator->regs[X] == emulator->regs[Y]) {
+        debugPrintf("Info: (emulatorExecute) Skipping VX == VY.\n");
+        emulator->PC += 0x2;
+      }
       break;
 
     case 0x6:
@@ -154,9 +175,74 @@ int emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0x8:
+      switch (N) {
+        case 0x0:
+          debugPrintf("Info: (emulatorExecute) Set VX to VY\n");
+          emulator->regs[X] = emulator->regs[Y];
+          break;
+
+        case 0x1:
+          debugPrintf("Info: (emulatorExecute) VX |= VY\n");
+          emulator->regs[X] |= emulator->regs[Y];
+          break;
+
+        case 0x2:
+          debugPrintf("Info: (emulatorExecute) VX &= VY\n");
+          emulator->regs[X] &= emulator->regs[Y];
+          break;
+
+        case 0x3:
+          debugPrintf("Info: (emulatorExecute) VX ^= VY\n");
+          emulator->regs[X] ^= emulator->regs[Y];
+          break;
+
+        case 0x4:
+          debugPrintf("Info: (emulatorExecute) VX += VY\n");
+          if ((size_t) emulator->regs[X] + (size_t) emulator->regs[Y] > 255) {
+            emulator->regs[0xE] = 1;
+          } else {
+            emulator->regs[0xE] = 0;
+          }
+          emulator->regs[X] += emulator->regs[Y];
+          break;
+
+        case 0x5:
+          debugPrintf("Info: (emulatorExecute) VX = VX - VY\n");
+          if (emulator->regs[X] > emulator->regs[Y]) {
+            emulator->regs[0xE] = 1;
+          } else {
+            emulator->regs[0xE] = 0;
+          }
+          emulator->regs[X] = emulator->regs[X] - emulator->regs[Y];
+          break;
+
+        case 0x6:
+          break;
+
+        case 0x7:
+          debugPrintf("Info: (emulatorExecute) VX = VY - VX\n");
+          if (emulator->regs[Y] > emulator->regs[X]) {
+            emulator->regs[0xE] = 1;
+          } else {
+            emulator->regs[0xE] = 0;
+          }
+          emulator->regs[X] = emulator->regs[Y] - emulator->regs[X];
+          break;
+
+        case 0xE:
+          break;
+
+        default:
+          debugPrintf("Error: (emulatorExecute) Not a valid instruction. Aborting.\n");
+          return -1;
+      }
       break;
 
     case 0x9:
+      if (emulator->regs[X] != emulator->regs[Y]) {
+        debugPrintf("Info: (emulatorExecute) Skipping VX != VY.\n");
+        emulator->PC += 0x2;
+      }
       break;
 
     case 0xA:
