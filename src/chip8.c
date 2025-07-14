@@ -30,6 +30,8 @@ uint8_t font[80] = {
 };
 
 int emulatorInit(Emulator* emulator, char* rom_file) {
+  srand(time(NULL));
+
   memset(emulator->memory, 0, MEMORY_SIZE);
   memset(emulator->display, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
   memset(emulator->regs, 0, NUMBER_REGS);
@@ -176,6 +178,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
 
     case 0x8:
       switch (N) {
+        // TODO: make shift instruction configurable
         case 0x0:
           debugPrintf("Info: (emulatorExecute) Set VX to VY\n");
           emulator->regs[X] = emulator->regs[Y];
@@ -217,6 +220,9 @@ int emulatorDecodeExecute(Emulator* emulator) {
           break;
 
         case 0x6:
+          debugPrintf("Info: (emulatorExecute) VX = VY >> 1\n");
+          emulator->regs[0xE] = emulator->regs[Y] & 0x1;
+          emulator->regs[X] = emulator->regs[Y] >> 0x1;
           break;
 
         case 0x7:
@@ -230,6 +236,9 @@ int emulatorDecodeExecute(Emulator* emulator) {
           break;
 
         case 0xE:
+          debugPrintf("Info: (emulatorExecute) VX = VY << 1\n");
+          emulator->regs[0xE] = (emulator->regs[Y] >> 0xE) & 0x1;
+          emulator->regs[X] = emulator->regs[Y] >> 0x1;
           break;
 
         default:
@@ -251,9 +260,14 @@ int emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0xB:
+      debugPrintf("Info: (emulatorExecute) Jump to V0 + %X\n", NNN);
+      emulator->PC = emulator->regs[0x0] + NNN;
       break;
 
     case 0xC:
+      debugPrintf("Info: (emulatorExecute) Generating random number\n");
+      int random = rand() % UINT8_MAX;
+      emulator->regs[X] = random & NN;
       break;
 
     case 0xD:
