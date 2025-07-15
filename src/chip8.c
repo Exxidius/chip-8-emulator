@@ -178,7 +178,6 @@ int emulatorDecodeExecute(Emulator* emulator) {
 
     case 0x8:
       switch (N) {
-        // TODO: make shift instruction configurable
         case 0x0:
           debugPrintf("Info: (emulatorExecute) Set VX to VY\n");
           emulator->regs[X] = emulator->regs[Y];
