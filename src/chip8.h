@@ -11,6 +11,7 @@
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
 #define MEMORY_SIZE 4096
+#define MEMORY_OFFSET 0x050
 #define NUMBER_REGS 16
 #define TIMER_FREQUENCY 60
 #define INSTRUCTIONS_FREQUENCY 700
@@ -47,6 +48,8 @@ int emulatorDecodeExecute(Emulator* emulator);
 
 void emulatorFetch(Emulator* emulator);
 void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
+void emulatorStore(Emulator* emulator, uint16_t X);
+void emulatorLoad(Emulator* emulator, uint16_t X);
 
 size_t emulatorCurrentTime_ms();
 

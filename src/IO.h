@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3/SDL_scancode.h>
 
 #include "inttypes.h"
 
@@ -20,6 +21,9 @@ int screenCleanup(IO* io);
 void screenDraw(IO* io, uint8_t pixels[]);
 
 int IOPoll(IO* io);
+int IOcheckKeyPressed(IO* io, uint8_t VX);
+
+uint8_t IOgetKeyPressed(IO* io);
 
 #endif
 

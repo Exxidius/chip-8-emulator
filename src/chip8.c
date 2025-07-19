@@ -39,7 +39,7 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   emulator->PC = 0x200;
   emulator->I = 0;
 
-  memcpy(emulator->memory + 0x050, font, sizeof(font));
+  memcpy(emulator->memory + MEMORY_OFFSET, font, sizeof(font));
 
   emulator->rom = fopen(rom_file, "rb");
   if (!emulator->rom) {
@@ -200,10 +200,10 @@ int emulatorDecodeExecute(Emulator* emulator) {
 
         case 0x4:
           debugPrintf("Info: (emulatorExecute) VX += VY\n");
-          if ((size_t) emulator->regs[X] + (size_t) emulator->regs[Y] > 255) {
-            emulator->regs[0xE] = 1;
+          if ((size_t) emulator->regs[X] + (size_t) emulator->regs[Y] > 0xFF) {
+            emulator->regs[0xF] = 1;
           } else {
-            emulator->regs[0xE] = 0;
+            emulator->regs[0xF] = 0;
           }
           emulator->regs[X] += emulator->regs[Y];
           break;
@@ -211,33 +211,33 @@ int emulatorDecodeExecute(Emulator* emulator) {
         case 0x5:
           debugPrintf("Info: (emulatorExecute) VX = VX - VY\n");
           if (emulator->regs[X] > emulator->regs[Y]) {
-            emulator->regs[0xE] = 1;
+            emulator->regs[0xF] = 1;
           } else {
-            emulator->regs[0xE] = 0;
+            emulator->regs[0xF] = 0;
           }
           emulator->regs[X] = emulator->regs[X] - emulator->regs[Y];
           break;
 
         case 0x6:
           debugPrintf("Info: (emulatorExecute) VX = VY >> 1\n");
-          emulator->regs[0xE] = emulator->regs[Y] & 0x1;
+          emulator->regs[0xF] = emulator->regs[Y] & 0x1;
           emulator->regs[X] = emulator->regs[Y] >> 0x1;
           break;
 
         case 0x7:
           debugPrintf("Info: (emulatorExecute) VX = VY - VX\n");
           if (emulator->regs[Y] > emulator->regs[X]) {
-            emulator->regs[0xE] = 1;
+            emulator->regs[0xF] = 1;
           } else {
-            emulator->regs[0xE] = 0;
+            emulator->regs[0xF] = 0;
           }
           emulator->regs[X] = emulator->regs[Y] - emulator->regs[X];
           break;
 
         case 0xE:
           debugPrintf("Info: (emulatorExecute) VX = VY << 1\n");
-          emulator->regs[0xE] = (emulator->regs[Y] >> 0xE) & 0x1;
-          emulator->regs[X] = emulator->regs[Y] >> 0x1;
+          emulator->regs[0xF] = (emulator->regs[Y] >> 0x7) & 0x1;
+          emulator->regs[X] = emulator->regs[Y] << 0x1;
           break;
 
         default:
@@ -275,9 +275,74 @@ int emulatorDecodeExecute(Emulator* emulator) {
       break;
 
     case 0xE:
+      debugPrintf("Info: (emulatorExecute) Skipping if key pressed\n");
+
+      if (X > 0xF) {
+        debugPrintf("Error: (emulatorExecute) Key not possible. Aborting.\n");
+        return -1;
+      }
+
+      int result = IOcheckKeyPressed(emulator->io, emulator->regs[X]);
+
+      switch (NN) {
+        case 0x9E:
+          if (result == 1) {
+            emulator->PC += 2;
+          }
+          break;
+        case 0xA1:
+          if (result == 0) {
+            emulator->PC += 2;
+          }
+          break;
+        default:
+          debugPrintf("Error: (emulatorExecute) Not a valid instruction. Aborting.\n");
+          return -1;
+      }
       break;
 
     case 0xF:
+      switch (NN) {
+        case 0x07:
+          emulator->regs[X] = emulator->delay_timer;
+          break;
+        case 0x15:
+          emulator->delay_timer = emulator->regs[X];
+          break;
+        case 0x18:
+          emulator->sound_timer = emulator->regs[X];
+          break;
+        case 0x1E:
+          if ((size_t) emulator->I + (size_t) emulator->regs[X] > 0xFFFF) {
+            emulator->regs[0xF] = 1;
+          }
+          emulator->I += emulator->regs[X];
+          break;
+        case 0x0A:
+          debugPrintf("Info: (emulatorExecute) waiting for key press\n");
+          int result = IOgetKeyPressed(emulator->io);
+
+          if (result == -1) {
+            emulator->PC -= 2;
+          } else {
+            emulator->regs[X] = result;
+          }
+          break;
+        case 0x29:
+          emulator->I = MEMORY_OFFSET + emulator->regs[X & 0xF] * 5;
+          break;
+        case 0x33:
+          emulator->memory[emulator->I] = (emulator->regs[X] / 100) % 10;
+          emulator->memory[emulator->I + 1] = (emulator->regs[X] / 10) % 10;
+          emulator->memory[emulator->I + 2] = emulator->regs[X] % 10;
+          break;
+        case 0x55:
+          emulatorStore(emulator, X);
+          break;
+        case 0x65:
+          emulatorLoad(emulator, X);
+          break;
+      }
       break;
 
     default:
@@ -285,6 +350,18 @@ int emulatorDecodeExecute(Emulator* emulator) {
       return -1;
   }
   return 0;
+}
+
+void emulatorStore(Emulator* emulator, uint16_t X) {
+  for (int i = 0; i <= X; i++) {
+    emulator->memory[emulator->I + i] = emulator->regs[i];
+  }
+}
+
+void emulatorLoad(Emulator* emulator, uint16_t X) {
+  for (int i = 0; i <= X; i++) {
+    emulator->regs[i] = emulator->memory[emulator->I + i];
+  }
 }
 
 void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {

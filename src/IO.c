@@ -3,6 +3,13 @@
 #include "IO.h"
 #include "chip8.h"
 
+uint16_t keycodes[16] = {
+  SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3, SDL_SCANCODE_4,
+  SDL_SCANCODE_Q, SDL_SCANCODE_W, SDL_SCANCODE_E, SDL_SCANCODE_R,
+  SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_F,
+  SDL_SCANCODE_Z, SDL_SCANCODE_X, SDL_SCANCODE_C, SDL_SCANCODE_V
+};
+
 int screenInit(IO* io, int width, int height)
 {
   int result = SDL_Init(SDL_INIT_VIDEO);
@@ -75,5 +82,40 @@ int IOPoll(IO* io) {
       break;
   }
   return result;
+}
+
+int IOcheckKeyPressed(IO* io, uint8_t VX) {
+  int result = IOPoll(io);
+  uint16_t scancode = keycodes[VX];
+
+  if (result == -1) {
+    return -1;
+  }
+
+  if (io->event.type == SDL_EVENT_KEY_DOWN) {
+    if (io->event.key.scancode == scancode) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+uint8_t IOgetKeyPressed(IO* io) {
+  int result = IOPoll(io);
+
+  if (result == -1) {
+    return -1;
+  }
+
+  if (io->event.type == SDL_EVENT_KEY_DOWN) {
+    for (int i = 0; i <= 0xF; i++) {
+      if (io->event.key.scancode == keycodes[i]) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
 }
 
