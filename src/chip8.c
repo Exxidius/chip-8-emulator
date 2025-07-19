@@ -200,44 +200,37 @@ int emulatorDecodeExecute(Emulator* emulator) {
 
         case 0x4:
           debugPrintf("Info: (emulatorExecute) VX += VY\n");
-          if ((size_t) emulator->regs[X] + (size_t) emulator->regs[Y] > 0xFF) {
-            emulator->regs[0xF] = 1;
-          } else {
-            emulator->regs[0xF] = 0;
-          }
-          emulator->regs[X] += emulator->regs[Y];
+          emulator->acc = emulator->regs[X] + emulator->regs[Y];
+          emulator->regs[X] = emulator->acc;
+          emulator->regs[0xF] = emulator->acc > UINT8_MAX ? 1 : 0;
           break;
 
         case 0x5:
           debugPrintf("Info: (emulatorExecute) VX = VX - VY\n");
-          if (emulator->regs[X] > emulator->regs[Y]) {
-            emulator->regs[0xF] = 1;
-          } else {
-            emulator->regs[0xF] = 0;
-          }
-          emulator->regs[X] = emulator->regs[X] - emulator->regs[Y];
+          emulator->acc = emulator->regs[X] - emulator->regs[Y];
+          emulator->regs[X] = emulator->acc;
+          emulator->regs[0xF] = emulator->acc >= 0 ? 1 : 0;
           break;
 
         case 0x6:
           debugPrintf("Info: (emulatorExecute) VX = VY >> 1\n");
-          emulator->regs[0xF] = emulator->regs[Y] & 0x1;
-          emulator->regs[X] = emulator->regs[Y] >> 0x1;
+          emulator->acc = emulator->regs[X];
+          emulator->regs[X] >>= 0x1;
+          emulator->regs[0xF] = emulator->acc & 0x1;
           break;
 
         case 0x7:
           debugPrintf("Info: (emulatorExecute) VX = VY - VX\n");
-          if (emulator->regs[Y] > emulator->regs[X]) {
-            emulator->regs[0xF] = 1;
-          } else {
-            emulator->regs[0xF] = 0;
-          }
-          emulator->regs[X] = emulator->regs[Y] - emulator->regs[X];
+          emulator->acc = emulator->regs[Y] - emulator->regs[X];
+          emulator->regs[X] = emulator->acc;
+          emulator->regs[0xF] = emulator->acc >= 0 ? 1 : 0;
           break;
 
         case 0xE:
           debugPrintf("Info: (emulatorExecute) VX = VY << 1\n");
-          emulator->regs[0xF] = (emulator->regs[Y] >> 0x7) & 0x1;
-          emulator->regs[X] = emulator->regs[Y] << 0x1;
+          emulator->acc = emulator->regs[X];
+          emulator->regs[X] <<= 0x1;
+          emulator->regs[0xF] = (emulator->acc >> 0x7) & 0x1;
           break;
 
         default:
@@ -313,9 +306,6 @@ int emulatorDecodeExecute(Emulator* emulator) {
           emulator->sound_timer = emulator->regs[X];
           break;
         case 0x1E:
-          if ((size_t) emulator->I + (size_t) emulator->regs[X] > 0xFFFF) {
-            emulator->regs[0xF] = 1;
-          }
           emulator->I += emulator->regs[X];
           break;
         case 0x0A:
@@ -388,7 +378,6 @@ void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
         break;
       }
 
-      debugPrintf("%d, %d\n",disp_x, disp_y);
       disp_x++;
     }
 

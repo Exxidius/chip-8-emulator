@@ -38,6 +38,7 @@ typedef struct Emulator {
 
   // Internal Variables
   size_t last_time_60Hz;
+  int acc;
 } Emulator;
 
 int emulatorInit(Emulator* emulator, char* rom_file);
