@@ -56,6 +56,8 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
+  memset(emulator->io->keys_pressed, 0, 16);
+
   if (screenInit(emulator->io, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
     debugPrintf("Error: (emulatorInit) Could not initialize screen.\n");
     return -1;
@@ -87,7 +89,7 @@ int emulatorLoop(Emulator* emulator) {
 
     emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
 
-    if (IOPoll(emulator->io) != 0) {
+    if (IOPoll(emulator->io) == -1) {
       emulator->running = 0;
     }
   }
@@ -274,8 +276,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
         debugPrintf("Error: (emulatorExecute) Key not possible. Aborting.\n");
         return -1;
       }
-
-      int result = IOcheckKeyPressed(emulator->io, emulator->regs[X]);
+      int result = IOCheckKeyPressed(emulator->io, emulator->regs[X]);
 
       switch (NN) {
         case 0x9E:
@@ -310,8 +311,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
           break;
         case 0x0A:
           debugPrintf("Info: (emulatorExecute) waiting for key press\n");
-          int result = IOgetKeyPressed(emulator->io);
-
+          int result = IOGetKeyPressed(emulator->io);
           if (result == -1) {
             emulator->PC -= 2;
           } else {

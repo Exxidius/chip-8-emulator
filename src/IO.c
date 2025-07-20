@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "stdbool.h"
 
 #include "IO.h"
 #include "chip8.h"
@@ -69,53 +70,64 @@ int screenCleanup(IO* io) {
 }
 
 int IOPoll(IO* io) {
-  SDL_PollEvent(&(io->event));
-  int result = 0;
+  bool event_outstanding = SDL_PollEvent(&(io->event));
 
-  switch (io->event.type) {
-    case SDL_EVENT_QUIT:
-      debugPrintf("Info: (IOPoll) Window quit.\n");
-      result = -1;
-      break;
+  while (event_outstanding) {
+    switch (io->event.type) {
+      case SDL_EVENT_QUIT:
+        debugPrintf("Info: (IOPoll) Window quit.\n");
+        return -1;
+        break;
 
-    default:
-      break;
-  }
-  return result;
-}
+      case SDL_EVENT_KEY_DOWN:
+        debugPrintf("Info: (IOPoll) Key down event.\n");
+        IOSetKey(io, io->event.key.scancode);
+        break;
 
-int IOcheckKeyPressed(IO* io, uint8_t VX) {
-  int result = IOPoll(io);
-  uint16_t scancode = keycodes[VX];
+      case SDL_EVENT_KEY_UP:
+        debugPrintf("Info: (IOPoll) Key down event.\n");
+        IOSetKey(io, io->event.key.scancode);
+        break;
 
-  if (result == -1) {
-    return -1;
-  }
-
-  if (io->event.type == SDL_EVENT_KEY_DOWN) {
-    if (io->event.key.scancode == scancode) {
-      return 1;
+      default:
+        break;
     }
-  }
 
+    event_outstanding = SDL_PollEvent(&(io->event));
+  }
   return 0;
 }
 
-uint8_t IOgetKeyPressed(IO* io) {
-  int result = IOPoll(io);
-
-  if (result == -1) {
-    return -1;
-  }
-
-  if (io->event.type == SDL_EVENT_KEY_DOWN) {
-    for (int i = 0; i <= 0xF; i++) {
-      if (io->event.key.scancode == keycodes[i]) {
-        return i;
-      }
+void IOSetKey(IO* io, SDL_Scancode key) {
+  for (int i = 0; i <= 0xF; i++) {
+    if (keycodes[i] == key) {
+      io->keys_pressed[i] = 1;
     }
   }
+}
 
+void IOResetKey(IO* io, SDL_Scancode key) {
+  for (int i = 0; i <= 0xF; i++) {
+    if (keycodes[i] == key) {
+      io->keys_pressed[i] = 0;
+    }
+  }
+}
+
+int IOCheckKeyPressed(IO* io, uint8_t VX) {
+  if (io->keys_pressed[VX] == 1) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int IOGetKeyPressed(IO* io) {
+  for (int i = 0; i <= 0xF; i++) {
+    if (io->keys_pressed[i] == 1) {
+      return i;
+    }
+  }
   return -1;
 }
 

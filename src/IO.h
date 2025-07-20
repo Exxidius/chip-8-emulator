@@ -13,6 +13,7 @@ typedef struct IO {
   SDL_Surface *surface;
   SDL_Texture *texture;
   SDL_Event event;
+  uint8_t keys_pressed[16];
 } IO;
 
 int screenInit(IO* io, int width, int height);
@@ -21,9 +22,11 @@ int screenCleanup(IO* io);
 void screenDraw(IO* io, uint8_t pixels[]);
 
 int IOPoll(IO* io);
-int IOcheckKeyPressed(IO* io, uint8_t VX);
+int IOCheckKeyPressed(IO* io, uint8_t VX);
+int IOGetKeyPressed(IO* io);
 
-uint8_t IOgetKeyPressed(IO* io);
+void IOSetKey(IO* io, SDL_Scancode key);
+void IOResetKey(IO* io, SDL_Scancode key);
 
 #endif
 
