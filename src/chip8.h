@@ -48,7 +48,6 @@ int emulatorTimer60Hz(Emulator* emulator);
 int emulatorDecodeExecute(Emulator* emulator);
 
 void emulatorFetch(Emulator* emulator);
-void emulatorDisplay(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
 void emulatorStore(Emulator* emulator, uint16_t X);
 void emulatorLoad(Emulator* emulator, uint16_t X);
 
@@ -56,6 +55,23 @@ size_t emulatorCurrentTime_ms();
 
 void emulatorHandleTimer(Emulator* emulator);
 void emulatorSleep_ms(size_t ms);
+
+int OpCode0x0(Emulator* emulator);
+int OpCode0x1(Emulator* emulator, uint16_t NNN);
+int OpCode0x2(Emulator* emulator, uint16_t NNN);
+int OpCode0x3(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0x4(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y);
+int OpCode0x6(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0x7(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0x8(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
+int OpCode0x9(Emulator* emulator, uint16_t X, uint16_t Y);
+int OpCode0xA(Emulator* emulator, uint16_t NNN);
+int OpCode0xB(Emulator* emulator, uint16_t NNN);
+int OpCode0xC(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0xD(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
+int OpCode0xE(Emulator* emulator, uint16_t X, uint16_t NN);
+int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN);
 
 int debugPrintf(const char* format, ...);
 
