@@ -7,6 +7,8 @@
 #ifndef IO_H
 #define IO_H
 
+#define SCALING_FACTOR 8
+
 typedef struct IO {
   SDL_Window *window;
   SDL_Renderer *renderer;
@@ -14,6 +16,8 @@ typedef struct IO {
   SDL_Texture *texture;
   SDL_Event event;
   uint8_t keys_pressed[16];
+  int width;
+  int height;
 } IO;
 
 int screenInit(IO* io, int width, int height);

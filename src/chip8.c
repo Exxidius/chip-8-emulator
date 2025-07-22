@@ -56,7 +56,7 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
-  if (IOInit(emulator->io, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
+  if (IOInit(emulator->io, DISPLAY_WIDTH, DISPLAY_HEIGHT) != 0) {
     return -1;
   }
 

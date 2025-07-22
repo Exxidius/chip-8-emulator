@@ -29,6 +29,9 @@ uint8_t key_to_position[16] = {
 int IOInit(IO* io, int width, int height) {
   memset(io->keys_pressed, 0, 16);
 
+  io->width = width;
+  io->height = height;
+
   if (screenInit(io, width, height) != 0) {
     debugPrintf("Error: (IOInit) Could not initialize screen.\n");
     return -1;
@@ -46,8 +49,8 @@ int screenInit(IO* io, int width, int height) {
 
   result = SDL_CreateWindowAndRenderer(
     "Chip8 Emulator",
-    width,
-    height,
+    width * SCALING_FACTOR,
+    height * SCALING_FACTOR,
     SDL_WINDOW_ALWAYS_ON_TOP,
     &(io->window),
     &(io->renderer)
@@ -66,9 +69,9 @@ void screenDraw(IO* io, uint8_t pixels[]) {
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(io->renderer);
 
-  for (size_t y = 0; y < DISPLAY_HEIGHT; y++) {
-    for (size_t x = 0; x < DISPLAY_WIDTH; x++) {
-      uint8_t value = pixels[y * DISPLAY_WIDTH + x];
+  for (size_t y = 0; y < io->height; y++) {
+    for (size_t x = 0; x < io->width; x++) {
+      uint8_t value = pixels[y * io->width + x];
 
       if (value > 0) {
         SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -76,7 +79,12 @@ void screenDraw(IO* io, uint8_t pixels[]) {
         SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
       }
 
-      SDL_FRect r = { x * 8, y * 8, 8, 8};
+      SDL_FRect r = {
+        x * SCALING_FACTOR,
+        y * SCALING_FACTOR,
+        SCALING_FACTOR,
+        SCALING_FACTOR
+      };
       SDL_RenderFillRect(io->renderer, &r);
     }
   }
