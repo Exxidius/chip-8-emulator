@@ -21,6 +21,7 @@ int screenCleanup(IO* io);
 
 void screenDraw(IO* io, uint8_t pixels[]);
 
+int IOInit(IO* io, int width, int height);
 int IOPoll(IO* io);
 int IOCheckKeyPressed(IO* io, uint8_t VX);
 int IOGetKeyPressed(IO* io);

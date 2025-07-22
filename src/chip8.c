@@ -56,10 +56,7 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
-  memset(emulator->io->keys_pressed, 0, 16);
-
-  if (screenInit(emulator->io, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
-    debugPrintf("Error: (emulatorInit) Could not initialize screen.\n");
+  if (IOInit(emulator->io, DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8) != 0) {
     return -1;
   }
 

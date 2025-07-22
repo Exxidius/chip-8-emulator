@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "stdbool.h"
+#include "string.h"
 
 #include "IO.h"
 #include "chip8.h"
@@ -11,8 +12,31 @@ uint16_t keycodes[16] = {
   SDL_SCANCODE_Z, SDL_SCANCODE_X, SDL_SCANCODE_C, SDL_SCANCODE_V
 };
 
-int screenInit(IO* io, int width, int height)
-{
+uint8_t position_to_key[16] = {
+  0x1, 0x2, 0x3, 0xC,
+  0x4, 0x5, 0x6, 0xD,
+  0x7, 0x8, 0x9, 0xE,
+  0xA, 0x0, 0xB, 0xF
+};
+
+uint8_t key_to_position[16] = {
+  0xD, 0x0, 0x1, 0x2,
+  0x4, 0x5, 0x6, 0x8,
+  0x9, 0xA, 0xC, 0xE,
+  0x3, 0x7, 0xB, 0xF
+};
+
+int IOInit(IO* io, int width, int height) {
+  memset(io->keys_pressed, 0, 16);
+
+  if (screenInit(io, width, height) != 0) {
+    debugPrintf("Error: (IOInit) Could not initialize screen.\n");
+    return -1;
+  }
+  return 0;
+}
+
+int screenInit(IO* io, int width, int height) {
   int result = SDL_Init(SDL_INIT_VIDEO);
 
   if (!result) {
@@ -86,7 +110,7 @@ int IOPoll(IO* io) {
 
       case SDL_EVENT_KEY_UP:
         debugPrintf("Info: (IOPoll) Key down event.\n");
-        IOSetKey(io, io->event.key.scancode);
+        IOResetKey(io, io->event.key.scancode);
         break;
 
       default:
@@ -115,17 +139,13 @@ void IOResetKey(IO* io, SDL_Scancode key) {
 }
 
 int IOCheckKeyPressed(IO* io, uint8_t VX) {
-  if (io->keys_pressed[VX] == 1) {
-    return 1;
-  } else {
-    return 0;
-  }
+    return io->keys_pressed[key_to_position[VX]];
 }
 
 int IOGetKeyPressed(IO* io) {
   for (int i = 0; i <= 0xF; i++) {
     if (io->keys_pressed[i] == 1) {
-      return i;
+      return position_to_key[i];
     }
   }
   return -1;
