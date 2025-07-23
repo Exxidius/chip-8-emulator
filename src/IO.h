@@ -16,6 +16,8 @@ typedef struct IO {
   SDL_Texture *texture;
   SDL_Event event;
   uint8_t keys_pressed[16];
+  int key_pressed;
+  int key_released;
   int width;
   int height;
 } IO;

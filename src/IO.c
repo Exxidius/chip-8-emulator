@@ -28,6 +28,8 @@ uint8_t key_to_position[16] = {
 
 int IOInit(IO* io, int width, int height) {
   memset(io->keys_pressed, 0, 16);
+  io->key_pressed = -1;
+  io->key_released= -1;
 
   io->width = width;
   io->height = height;
@@ -142,6 +144,7 @@ void IOResetKey(IO* io, SDL_Scancode key) {
   for (int i = 0; i <= 0xF; i++) {
     if (keycodes[i] == key) {
       io->keys_pressed[i] = 0;
+      io->key_released = position_to_key[i];
     }
   }
 }
@@ -152,8 +155,15 @@ int IOCheckKeyPressed(IO* io, uint8_t VX) {
 
 int IOGetKeyPressed(IO* io) {
   for (int i = 0; i <= 0xF; i++) {
-    if (io->keys_pressed[i] == 1) {
+    // If the key we pressed before is the same as the last released
+    // we can return it to the user and continue with execution
+    if (io->key_pressed == io->key_released) {
+      io->key_pressed = -1;
       return position_to_key[i];
+    }
+
+    if (io->keys_pressed[i] == 1) {
+      io->key_pressed = position_to_key[i];
     }
   }
   return -1;
