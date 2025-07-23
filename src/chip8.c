@@ -44,7 +44,7 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   emulator->rom = fopen(rom_file, "rb");
   if (!emulator->rom) {
     debugPrintf("Error: (emulatorInit) Could not open ROM file\n");
-    return -1;
+    return ERROR;
   }
 
   fread(emulator->memory + 0x200, 1, MEMORY_SIZE - 0x200, emulator->rom);
@@ -52,12 +52,12 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   emulator->call_stack = (Stack*) malloc(sizeof(Stack));
   if (stackInit(emulator->call_stack) != 0) {
     debugPrintf("Error: (emulatorInit) Could not initialize stack.\n");
-    return -1;
+    return ERROR;
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
   if (IOInit(emulator->io, DISPLAY_WIDTH, DISPLAY_HEIGHT) != 0) {
-    return -1;
+    return ERROR;
   }
 
   emulator->last_time_60Hz = emulatorCurrentTime_ms();
@@ -81,12 +81,12 @@ int emulatorLoop(Emulator* emulator) {
 
     if (emulatorDecodeExecute(emulator) != 0) {
       debugPrintf("Error: (emulatorLoop) Could not execute Instruction.\n");
-      return -1;
+      return ERROR;
     }
 
     emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
 
-    if (IOPoll(emulator->io) == -1) {
+    if (IOPoll(emulator->io) == ERROR) {
       emulator->running = 0;
     }
   }
@@ -118,7 +118,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
     case 0x0:
       debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x0\n");
       if (OpCode0x0(emulator) != 0) {
-        return -1;
+        return ERROR;
       }
       break;
     case 0x1:
@@ -152,7 +152,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
     case 0x8:
       debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x8\n");
       if (OpCode0x8(emulator, X, Y, N) != 0) {
-        return -1;
+        return ERROR;
       }
       break;
     case 0x9:
@@ -177,18 +177,18 @@ int emulatorDecodeExecute(Emulator* emulator) {
     case 0xE:
       debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xE\n");
       if (OpCode0xE(emulator, X, NN) != 0) {
-        return -1;
+        return ERROR;
       }
       break;
     case 0xF:
       debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xF\n");
       if (OpCode0xF(emulator, X, NN) != 0) {
-        return -1;
+        return ERROR;
       }
       break;
     default:
       debugPrintf("Error: (emulatorDecodeExecute) Not a valid instruction.\n");
-      return -1;
+      return ERROR;
   }
   return 0;
 }
@@ -273,7 +273,7 @@ int OpCode0x0(Emulator* emulator) {
 
     default:
       debugPrintf("Error: (OpCode0x0) Not a valid instruction. Aborting.\n");
-      return -1;
+      return ERROR;
   }
   return 0;
 }
@@ -386,7 +386,7 @@ int OpCode0x8(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
 
     default:
       debugPrintf("Error: (OpCode0x8) Not a valid instruction. Aborting.\n");
-      return -1;
+      return ERROR;
   }
   return 0;
 }
@@ -462,7 +462,7 @@ int OpCode0xE(Emulator* emulator, uint16_t X, uint16_t NN) {
 
   if (X > 0xF) {
     debugPrintf("Error: (OpCode0xE) Key not possible. Aborting.\n");
-    return -1;
+    return ERROR;
   }
   int result = IOCheckKeyPressed(emulator->io, emulator->regs[X]);
 
@@ -479,7 +479,7 @@ int OpCode0xE(Emulator* emulator, uint16_t X, uint16_t NN) {
       break;
     default:
       debugPrintf("Error: (OpCode0xE) Not a valid instruction. Aborting.\n");
-      return -1;
+      return ERROR;
   }
   return 0;
 }
@@ -501,7 +501,7 @@ int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN) {
     case 0x0A:
       debugPrintf("Info: (OpCode0xF) waiting for key press\n");
       int result = IOGetKeyPressed(emulator->io);
-      if (result == -1) {
+      if (result == ERROR) {
         emulator->PC -= 2;
       } else {
         emulator->regs[X] = result;
@@ -523,7 +523,7 @@ int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN) {
       break;
     default:
       debugPrintf("Error: (OpCode0xF) Not a valid instruction. Aborting.\n");
-      return -1;
+      return ERROR;
   }
   return 0;
 }

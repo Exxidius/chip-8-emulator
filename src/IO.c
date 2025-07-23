@@ -36,7 +36,7 @@ int IOInit(IO* io, int width, int height) {
 
   if (screenInit(io, width, height) != 0) {
     debugPrintf("Error: (IOInit) Could not initialize screen.\n");
-    return -1;
+    return ERROR;
   }
   return 0;
 }
@@ -46,7 +46,7 @@ int screenInit(IO* io, int width, int height) {
 
   if (!result) {
     debugPrintf("Error: (screenInit) Couldnt initialize SDL.\n");
-    return -3;
+    return ERROR;
   }
 
   result = SDL_CreateWindowAndRenderer(
@@ -60,7 +60,7 @@ int screenInit(IO* io, int width, int height) {
 
   if (!result) {
     debugPrintf("Error: (screenInit) Couldn't create renderer.\n");
-    return -3;
+    return ERROR;
   }
 
   debugPrintf("Info: (screenInit) IO initialized.\n");
@@ -110,7 +110,7 @@ int IOPoll(IO* io) {
     switch (io->event.type) {
       case SDL_EVENT_QUIT:
         debugPrintf("Info: (IOPoll) Window quit.\n");
-        return -1;
+        return ERROR;
         break;
 
       case SDL_EVENT_KEY_DOWN:
@@ -166,6 +166,6 @@ int IOGetKeyPressed(IO* io) {
       io->key_pressed = position_to_key[i];
     }
   }
-  return -1;
+  return ERROR;
 }
 

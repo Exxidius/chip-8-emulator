@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
   if (argc < 2) {
     debugPrintf("Error: (main) No ROM to load supplied!\n");
     debugPrintf("              Usage is ./chip8-emulator <ROM file>\n");
-    exit(-1);
+    exit(ERROR);
   }
 
   // TODO: check better command line parsing
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
   if (emulatorInit(&emulator, rom_file) != 0) {
     debugPrintf("Error: (main) Could not initialize Emulator!\n");
-    exit(-1);
+    exit(ERROR);
   }
 
   int result = emulatorLoop(&emulator);

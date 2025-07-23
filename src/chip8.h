@@ -15,6 +15,7 @@
 #define NUMBER_REGS 16
 #define TIMER_FREQUENCY 60
 #define INSTRUCTIONS_FREQUENCY 1100
+#define ERROR -1
 
 typedef struct Emulator {
   uint8_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT];
