@@ -84,7 +84,7 @@ int emulatorLoop(Emulator* emulator) {
       return ERROR;
     }
 
-    emulatorSleep_ms(1000 / INSTRUCTIONS_FREQUENCY);
+    emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
 
     if (IOPoll(emulator->io) == ERROR) {
       emulator->running = 0;
