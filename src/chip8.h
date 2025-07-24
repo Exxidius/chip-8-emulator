@@ -14,7 +14,7 @@
 #define MEMORY_OFFSET 0x050
 #define NUMBER_REGS 16
 #define TIMER_FREQUENCY 60
-#define INSTRUCTIONS_FREQUENCY 1100
+#define INSTRUCTIONS_FREQUENCY 1000
 #define ERROR -1
 
 typedef struct Emulator {

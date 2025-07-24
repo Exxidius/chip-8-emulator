@@ -2,6 +2,8 @@
 #include "stdint.h"
 #include "stdlib.h"
 #include "string.h"
+#include "unistd.h"
+#include "ctype.h"
 
 #include "chip8.h"
 
@@ -10,29 +12,49 @@
 uint8_t debug_active = 0;
 
 int main(int argc, char* argv[]) {
-  if (argc < 2) {
-    debugPrintf("Error: (main) No ROM to load supplied!\n");
-    debugPrintf("              Usage is ./chip8-emulator <ROM file>\n");
+  // Disable error printing from getopt - handled in here
+  opterr = 0;
+
+  int opt;
+  char* rom_file = NULL;
+
+  while ((opt = getopt(argc, argv, "f:d")) != -1) {
+    switch (opt) {
+      case 'f':
+        rom_file = optarg;
+        break;
+      case 'd':
+        debug_active = 1;
+        break;
+      case '?':
+        if (optopt == 'f') {
+          printf("Error: (main) No ROM to load supplied.\n");
+          exit(ERROR);
+        } else if (isprint(optopt)) {
+          printf("Error: (main) Unknown option `-%c'.\n", optopt);
+          exit(ERROR);
+        } else {
+          printf("Error: (main) Unknown option character `\\x%x'.\n", optopt);
+          exit(ERROR);
+        }
+      default:
+        printf("Error: (main) Could not parse command line arguments!\n");
+        exit(ERROR);
+    }
+  }
+
+  if (rom_file == NULL) {
+    printf("Error: (main) No ROM to load supplied.\n");
     exit(ERROR);
   }
 
-  // TODO: check better command line parsing
-  if (argc > 2 && strncmp(argv[2], "--debug", 7) == 0) {
-    debug_active = 1;
-  }
-
-  char rom_file[MAX_ROM_NAME_SIZE] = { 0 };
-  strncpy(rom_file, argv[1], MAX_ROM_NAME_SIZE);
-  rom_file[MAX_ROM_NAME_SIZE - 1] = '\0';
-
   debugPrintf("Info: (main) ROM to load is %s\n", rom_file);
-
   debugPrintf("Info: (main) Starting chip8 emulator...\n");
 
   Emulator emulator;
 
   if (emulatorInit(&emulator, rom_file) != 0) {
-    debugPrintf("Error: (main) Could not initialize Emulator!\n");
+    printf("Error: (main) Could not initialize Emulator!\n");
     exit(ERROR);
   }
 
