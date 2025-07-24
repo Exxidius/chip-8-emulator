@@ -9,7 +9,9 @@ Please find installation instructions for SDL3 directly on the [libsdl](https://
 To build the emulator run ``make`` in the src directory.
 This will output the binary ``chip8-emulator`` - the emulator can than be run with the following command
 
-``` ./chip8-emulator <path-to-rom> [--debug] ```
+```bash
+./chip8-emulator <path-to-rom> [--debug]
+```
 
 Further planned features to practice before working on a GBA emulator include:
    - [ ] A debugging interface with SDL3
