@@ -8,8 +8,6 @@
 #include "IO.h"
 #include "stack.h"
 
-extern uint8_t debug_active;
-
 uint8_t font[80] = {
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
   0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -29,8 +27,10 @@ uint8_t font[80] = {
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-int emulatorInit(Emulator* emulator, char* rom_file) {
+int emulatorInit(Emulator* emulator, Options* cli_options) {
   srand(time(NULL));
+
+  emulator->cli_options = cli_options;
 
   memset(emulator->memory, 0, MEMORY_SIZE);
   memset(emulator->display, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
@@ -41,22 +41,23 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
 
   memcpy(emulator->memory + MEMORY_OFFSET, font, sizeof(font));
 
-  emulator->rom = fopen(rom_file, "rb");
-  if (!emulator->rom) {
-    debugPrintf("Error: (emulatorInit) Could not open ROM file\n");
+  emulator->rom_fd = fopen(emulator->cli_options->rom_file, "rb");
+  if (!emulator->rom_fd) {
+    printf("Error: (emulatorInit) Could not open ROM file\n");
     return ERROR;
   }
 
-  fread(emulator->memory + 0x200, 1, MEMORY_SIZE - 0x200, emulator->rom);
+  fread(emulator->memory + 0x200, 1, MEMORY_SIZE - 0x200, emulator->rom_fd);
 
   emulator->call_stack = (Stack*) malloc(sizeof(Stack));
   if (stackInit(emulator->call_stack) != 0) {
-    debugPrintf("Error: (emulatorInit) Could not initialize stack.\n");
+    printf("Error: (emulatorInit) Could not initialize stack.\n");
     return ERROR;
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
   if (IOInit(emulator->io, DISPLAY_WIDTH, DISPLAY_HEIGHT) != 0) {
+    printf("Error: (emulatorInit) Could not initialize IO.\n");
     return ERROR;
   }
 
@@ -65,12 +66,11 @@ int emulatorInit(Emulator* emulator, char* rom_file) {
   emulator->delay_timer = 0;
   emulator->sound_timer = 0;
 
-  debugPrintf("Info: (emulatorInit) Emulator initialized.\n");
-
   screenDraw(emulator->io, emulator->display);
   emulator->running = 1;
+  emulator->paused = 0;
 
-  return 0;
+  return OK;
 }
 
 int emulatorLoop(Emulator* emulator) {
@@ -80,17 +80,17 @@ int emulatorLoop(Emulator* emulator) {
     emulatorFetch(emulator);
 
     if (emulatorDecodeExecute(emulator) != 0) {
-      debugPrintf("Error: (emulatorLoop) Could not execute Instruction.\n");
+      printf("Error: (emulatorLoop) Could not execute Instruction.\n");
       return ERROR;
     }
 
     emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
 
-    if (IOPoll(emulator->io) == ERROR) {
+    if (IOPoll(emulator->io) == QUIT) {
       emulator->running = 0;
     }
   }
-  return 0;
+  return OK;
 }
 
 void emulatorFetch(Emulator* emulator) {
@@ -109,49 +109,37 @@ int emulatorDecodeExecute(Emulator* emulator) {
   uint16_t NN = emulator->current_instruction & 0x00FF;
   uint16_t NNN = emulator->current_instruction & 0x0FFF;
 
-  debugPrintf(
-    "Info: (emulatorExecute) Current instruction is %04X.\n",
-    emulator->current_instruction
-  );
-
   switch (first_nibble) {
     case 0x0:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x0\n");
       if (OpCode0x0(emulator) != 0) {
+        printf("Error: (emulatorDecodeExecute) OpCode0x0 failed.\n");
         return ERROR;
       }
       break;
     case 0x1:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x1\n");
       OpCode0x1(emulator, NNN);
       break;
     case 0x2:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x2\n");
       OpCode0x2(emulator, NNN);
       break;
     case 0x3:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x3\n");
       OpCode0x3(emulator, X, NN);
       break;
     case 0x4:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x4\n");
       OpCode0x4(emulator, X, NN);
       break;
     case 0x5:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x5\n");
       OpCode0x5(emulator, X, Y);
       break;
     case 0x6:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x6\n");
       OpCode0x6(emulator, X, NN);
       break;
     case 0x7:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x7\n");
       OpCode0x7(emulator, X, NN);
       break;
     case 0x8:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0x8\n");
       if (OpCode0x8(emulator, X, Y, N) != 0) {
+        printf("Error: (emulatorDecodeExecute) OpCode0x8 failed.\n");
         return ERROR;
       }
       break;
@@ -159,38 +147,34 @@ int emulatorDecodeExecute(Emulator* emulator) {
       OpCode0x9(emulator, X, Y);
       break;
     case 0xA:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xA\n");
       OpCode0xA(emulator, NNN);
       break;
     case 0xB:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xB\n");
       OpCode0xB(emulator, NNN);
       break;
     case 0xC:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xC\n");
       OpCode0xC(emulator, X, NN);
       break;
     case 0xD:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xD\n");
       OpCode0xD(emulator, X, Y, N);
       break;
     case 0xE:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xE\n");
       if (OpCode0xE(emulator, X, NN) != 0) {
+        printf("Error: (emulatorDecodeExecute) OpCode0xE failed.\n");
         return ERROR;
       }
       break;
     case 0xF:
-      debugPrintf("Info: (emulatorDecodeExecute) OpCode 0xF\n");
       if (OpCode0xF(emulator, X, NN) != 0) {
+        printf("Error: (emulatorDecodeExecute) OpCode0xF failed.\n");
         return ERROR;
       }
       break;
     default:
-      debugPrintf("Error: (emulatorDecodeExecute) Not a valid instruction.\n");
+      printf("Error: (emulatorDecodeExecute) Not a valid instruction.\n");
       return ERROR;
   }
-  return 0;
+  return OK;
 }
 
 void emulatorStore(Emulator* emulator, uint16_t X) {
@@ -208,7 +192,7 @@ void emulatorLoad(Emulator* emulator, uint16_t X) {
 void emulatorHandleTimer(Emulator* emulator) {
   int decrease = emulatorTimer60Hz(emulator);
 
-  if (decrease == 0) {
+  if (decrease == FALSE) {
     return;
   }
 
@@ -229,10 +213,10 @@ int emulatorTimer60Hz(Emulator* emulator) {
 
   if (diff > update_rate_ms) {
     emulator->last_time_60Hz = emulatorCurrentTime_ms();
-    return 1;
+    return TRUE;
   }
 
-  return 0;
+  return OK;
 }
 
 int emulatorCleanup(Emulator* emulator) {
@@ -241,8 +225,7 @@ int emulatorCleanup(Emulator* emulator) {
   screenCleanup(emulator->io);
   free(emulator->io);
 
-  debugPrintf("Info: (emulatorCleanup) Emulator finished cleanup.\n");
-  return 0;
+  return OK;
 }
 
 size_t emulatorCurrentTime_ms() {
@@ -262,160 +245,138 @@ void emulatorSleep_ms(size_t ms) {
 int OpCode0x0(Emulator* emulator) {
   switch (emulator->current_instruction) {
     case 0x00E0:
-      debugPrintf("Info: (OpCode0x0) Clear screen\n");
       memset(emulator->display, 0, DISPLAY_HEIGHT * DISPLAY_WIDTH);
       break;
 
     case 0x00EE:
-      debugPrintf("Info: (OpCode0x0) Jump to %X.\n", emulator->PC);
       emulator->PC = stackPop(emulator->call_stack);
       break;
 
     default:
-      debugPrintf("Error: (OpCode0x0) Not a valid instruction. Aborting.\n");
+      printf("Error: (OpCode0x0) Not a valid instruction. Aborting.\n");
       return ERROR;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0x1(Emulator* emulator, uint16_t NNN) {
-  debugPrintf("Info: (OpCode0x1) Jump to %X\n", NNN);
   emulator->PC = NNN;
-  return 0;
+  return OK;
 }
 
 int OpCode0x2(Emulator* emulator, uint16_t NNN) {
-  debugPrintf("Info: (OpCode0x2) Calling to %X.\n", emulator->PC);
   stackPush(emulator->call_stack, emulator->PC);
   emulator->PC = NNN;
-  return 0;
+  return OK;
 }
 
 int OpCode0x3(Emulator* emulator, uint16_t X, uint16_t NN) {
   if (emulator->regs[X] == NN) {
-    debugPrintf("Info: (OpCode0x3) Skipping VX == NN.\n");
     emulator->PC += 0x2;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0x4(Emulator* emulator, uint16_t X, uint16_t NN) {
   if (emulator->regs[X] != NN) {
-    debugPrintf("Info: (OpCode0x4) Skipping VX != NN.\n");
     emulator->PC += 0x2;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y) {
   if (emulator->regs[X] == emulator->regs[Y]) {
-    debugPrintf("Info: (OpCode0x5) Skipping VX == VY.\n");
     emulator->PC += 0x2;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0x6(Emulator* emulator, uint16_t X, uint16_t NN) {
-  debugPrintf("Info: (OpCode0x6) Set register %X to %X\n", X, NN);
   emulator->regs[X] = NN;
-  return 0;
+  return OK;
 }
 
 int OpCode0x7(Emulator* emulator, uint16_t X, uint16_t NN) {
-  debugPrintf("Info: (OpCode0x7) Add %X to register %X\n", NN, X);
   emulator->regs[X] += NN;
-  return 0;
+  return OK;
 }
 
 int OpCode0x8(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
   switch (N) {
     case 0x0:
-      debugPrintf("Info: (OpCode0x8) Set VX to VY\n");
       emulator->regs[X] = emulator->regs[Y];
       break;
 
     case 0x1:
-      debugPrintf("Info: (OpCode0x8) VX |= VY\n");
       emulator->regs[X] |= emulator->regs[Y];
       break;
 
     case 0x2:
-      debugPrintf("Info: (OpCode0x8) VX &= VY\n");
       emulator->regs[X] &= emulator->regs[Y];
       break;
 
     case 0x3:
-      debugPrintf("Info: (OpCode0x8) VX ^= VY\n");
       emulator->regs[X] ^= emulator->regs[Y];
       break;
 
     case 0x4:
-      debugPrintf("Info: (OpCode0x8) VX += VY\n");
       emulator->acc = emulator->regs[X] + emulator->regs[Y];
       emulator->regs[X] = emulator->acc;
       emulator->regs[0xF] = emulator->acc > UINT8_MAX ? 1 : 0;
       break;
 
     case 0x5:
-      debugPrintf("Info: (OpCode0x8) VX = VX - VY\n");
       emulator->acc = emulator->regs[X] - emulator->regs[Y];
       emulator->regs[X] = emulator->acc;
       emulator->regs[0xF] = emulator->acc >= 0 ? 1 : 0;
       break;
 
     case 0x6:
-      debugPrintf("Info: (OpCode0x8) VX = VY >> 1\n");
       emulator->acc = emulator->regs[X];
       emulator->regs[X] >>= 0x1;
       emulator->regs[0xF] = emulator->acc & 0x1;
       break;
 
     case 0x7:
-      debugPrintf("Info: (OpCode0x8) VX = VY - VX\n");
       emulator->acc = emulator->regs[Y] - emulator->regs[X];
       emulator->regs[X] = emulator->acc;
       emulator->regs[0xF] = emulator->acc >= 0 ? 1 : 0;
       break;
 
     case 0xE:
-      debugPrintf("Info: (OpCode0x8) VX = VY << 1\n");
       emulator->acc = emulator->regs[X];
       emulator->regs[X] <<= 0x1;
       emulator->regs[0xF] = (emulator->acc >> 0x7) & 0x1;
       break;
 
     default:
-      debugPrintf("Error: (OpCode0x8) Not a valid instruction. Aborting.\n");
+      printf("Error: (OpCode0x8) Not a valid instruction. Aborting.\n");
       return ERROR;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0x9(Emulator* emulator, uint16_t X, uint16_t Y) {
   if (emulator->regs[X] != emulator->regs[Y]) {
-    debugPrintf("Info: (OpCode0x9) Skipping VX != VY.\n");
     emulator->PC += 0x2;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0xA(Emulator* emulator, uint16_t NNN)  {
-  debugPrintf("Info: (OpCode0xA) et I to %X\n", NNN);
   emulator->I = NNN;
-  return 0;
+  return OK;
 }
 
 int OpCode0xB(Emulator* emulator, uint16_t NNN) {
-  debugPrintf("Info: (OpCode0xB) Jump to V0 + %X\n", NNN);
   emulator->PC = emulator->regs[0x0] + NNN;
-  return 0;
+  return OK;
 }
 
 int OpCode0xC(Emulator* emulator, uint16_t X, uint16_t NN) {
-  debugPrintf("Info: (OpCode0xC) Generating random number\n");
   int random = rand() % UINT8_MAX;
   emulator->regs[X] = random & NN;
-  return 0;
+  return OK;
 }
 
 int OpCode0xD(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
@@ -454,14 +415,13 @@ int OpCode0xD(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
   }
 
   screenDraw(emulator->io, emulator->display);
-  return 0;
+  return OK;
 }
 
 int OpCode0xE(Emulator* emulator, uint16_t X, uint16_t NN) {
-  debugPrintf("Info: (OpCode0xE) Skipping if key pressed\n");
 
   if (X > 0xF) {
-    debugPrintf("Error: (OpCode0xE) Key not possible. Aborting.\n");
+    printf("Error: (OpCode0xE) Key not possible. Aborting.\n");
     return ERROR;
   }
   int result = IOCheckKeyPressed(emulator->io, emulator->regs[X]);
@@ -478,13 +438,14 @@ int OpCode0xE(Emulator* emulator, uint16_t X, uint16_t NN) {
       }
       break;
     default:
-      debugPrintf("Error: (OpCode0xE) Not a valid instruction. Aborting.\n");
+      printf("Error: (OpCode0xE) Not a valid instruction. Aborting.\n");
       return ERROR;
   }
-  return 0;
+  return OK;
 }
 
 int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN) {
+  int result;
   switch (NN) {
     case 0x07:
       emulator->regs[X] = emulator->delay_timer;
@@ -499,9 +460,9 @@ int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN) {
       emulator->I += emulator->regs[X];
       break;
     case 0x0A:
-      debugPrintf("Info: (OpCode0xF) waiting for key press\n");
-      int result = IOGetKeyPressed(emulator->io);
-      if (result == ERROR) {
+      // getKeyPressed only returns the key once released
+      result = IOGetKeyPressed(emulator->io);
+      if (result == NO_KEY_PRESSED) {
         emulator->PC -= 2;
       } else {
         emulator->regs[X] = result;
@@ -522,21 +483,9 @@ int OpCode0xF(Emulator* emulator, uint16_t X, uint16_t NN) {
       emulatorLoad(emulator, X);
       break;
     default:
-      debugPrintf("Error: (OpCode0xF) Not a valid instruction. Aborting.\n");
+      printf("Error: (OpCode0xF) Not a valid instruction. Aborting.\n");
       return ERROR;
   }
-  return 0;
-}
-
-int debugPrintf(const char* format, ...) {
-  if (debug_active) {
-    int result;
-    va_list va;
-    va_start(va, format);
-    result = vprintf(format, va);
-    va_end(va);
-    return result;
-  }
-  return 0;
+  return OK;
 }
 

@@ -10,7 +10,7 @@ To build the emulator run ``make`` in the src directory.
 This will output the binary ``chip8-emulator`` - the emulator can than be run with the following command
 
 ```bash
-./chip8-emulator -f <path-to-rom> [-d]
+chip8-emulator -f <path-to-rom> [-dnox]
 ```
 
 Further planned features to practice before working on a GBA emulator include:

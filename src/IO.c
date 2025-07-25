@@ -35,17 +35,17 @@ int IOInit(IO* io, int width, int height) {
   io->height = height;
 
   if (screenInit(io, width, height) != 0) {
-    debugPrintf("Error: (IOInit) Could not initialize screen.\n");
+    printf("Error: (IOInit) Could not initialize screen.\n");
     return ERROR;
   }
-  return 0;
+  return OK;
 }
 
 int screenInit(IO* io, int width, int height) {
   int result = SDL_Init(SDL_INIT_VIDEO);
 
   if (!result) {
-    debugPrintf("Error: (screenInit) Couldnt initialize SDL.\n");
+    printf("Error: (screenInit) Couldnt initialize SDL.\n");
     return ERROR;
   }
 
@@ -59,12 +59,11 @@ int screenInit(IO* io, int width, int height) {
   );
 
   if (!result) {
-    debugPrintf("Error: (screenInit) Couldn't create renderer.\n");
+    printf("Error: (screenInit) Couldn't create renderer.\n");
     return ERROR;
   }
 
-  debugPrintf("Info: (screenInit) IO initialized.\n");
-  return 0;
+  return OK;
 }
 
 void screenDraw(IO* io, uint8_t pixels[]) {
@@ -99,8 +98,7 @@ int screenCleanup(IO* io) {
 
   SDL_Quit();
 
-  debugPrintf("Info: (screenCleanup) SDL finished cleanup.\n");
-  return 0;
+  return OK;
 }
 
 int IOPoll(IO* io) {
@@ -109,17 +107,14 @@ int IOPoll(IO* io) {
   while (event_outstanding) {
     switch (io->event.type) {
       case SDL_EVENT_QUIT:
-        debugPrintf("Info: (IOPoll) Window quit.\n");
-        return ERROR;
+        return QUIT;
         break;
 
       case SDL_EVENT_KEY_DOWN:
-        debugPrintf("Info: (IOPoll) Key down event.\n");
         IOSetKey(io, io->event.key.scancode);
         break;
 
       case SDL_EVENT_KEY_UP:
-        debugPrintf("Info: (IOPoll) Key down event.\n");
         IOResetKey(io, io->event.key.scancode);
         break;
 
@@ -129,7 +124,7 @@ int IOPoll(IO* io) {
 
     event_outstanding = SDL_PollEvent(&(io->event));
   }
-  return 0;
+  return OK;
 }
 
 void IOSetKey(IO* io, SDL_Scancode key) {
@@ -166,6 +161,6 @@ int IOGetKeyPressed(IO* io) {
       io->key_pressed = position_to_key[i];
     }
   }
-  return ERROR;
+  return NO_KEY_PRESSED;
 }
 
