@@ -129,7 +129,10 @@ int emulatorDecodeExecute(Emulator* emulator) {
       OpCode0x4(emulator, X, NN);
       break;
     case 0x5:
-      OpCode0x5(emulator, X, Y);
+      if (OpCode0x5(emulator, X, Y, N) != 0) {
+        printf("Error: (emulatorDecodeExecute) OpCode0x5 failed.\n");
+        return ERROR;
+      }
       break;
     case 0x6:
       OpCode0x6(emulator, X, NN);
@@ -284,9 +287,20 @@ int OpCode0x4(Emulator* emulator, uint16_t X, uint16_t NN) {
   return OK;
 }
 
-int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y) {
-  if (emulator->regs[X] == emulator->regs[Y]) {
-    emulator->PC += 0x2;
+int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
+  switch (N) {
+    case 0x0:
+      if (emulator->regs[X] == emulator->regs[Y]) {
+        emulator->PC += 0x2;
+      }
+      break;
+    case 0x2:
+      break;
+    case 0x3:
+      break;
+    default:
+      printf("Error: (OpCode0x5) Not a valid instruction. Aborting.\n");
+      return ERROR;
   }
   return OK;
 }

@@ -87,7 +87,7 @@ int OpCode0x1(Emulator* emulator, uint16_t NNN);
 int OpCode0x2(Emulator* emulator, uint16_t NNN);
 int OpCode0x3(Emulator* emulator, uint16_t X, uint16_t NN);
 int OpCode0x4(Emulator* emulator, uint16_t X, uint16_t NN);
-int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y);
+int OpCode0x5(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
 int OpCode0x6(Emulator* emulator, uint16_t X, uint16_t NN);
 int OpCode0x7(Emulator* emulator, uint16_t X, uint16_t NN);
 int OpCode0x8(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N);
