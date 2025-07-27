@@ -10,12 +10,12 @@ To build the emulator run ``make`` in the src directory.
 This will output the binary ``chip8-emulator`` - the emulator can than be run with the following command
 
 ```bash
-chip8-emulator -f <path-to-rom> [-dnox]
+chip8-emulator -f <path-to-rom> [-dhnox]
 ```
 
 Further planned features to practice before working on a GBA emulator include:
    - [ ] A debugging interface with SDL3
-   - [ ] Proper command line flag support
+   - [x] Proper command line flag support
    - [ ] Support for the newer/different version of Chip8 (Super Chip etc.)
 
 Resources (Thanks to the authors for providing these!)

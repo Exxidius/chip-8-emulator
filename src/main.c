@@ -8,16 +8,29 @@
 #include "chip8.h"
 
 void exitPrintUsage() {
-  printf("Usage: chip8-emulator -f <path-to-rom> [-d]\n");
+  printf("Usage: chip8-emulator -f <path-to-rom> [-dhnox]\n");
+  printf("  -d   Enable debug mode (interface).\n");
+  printf("  -h   Print this help message.\n");
+  printf("  -n   Enable super-chip modern mode (quirks).\n");
+  printf("  -o   Enable super-chip legacy mode (quirks).\n");
+  printf("  -x   Enable XO-chip mode (quirks).\n");
   exit(ERROR);
 }
 
-void parseOptions(int argc, char* argv[], Options* cli_options) {
+void exitModeCheck() {
+  printf("Error: (exitModeCheck) Cannot set multiple chip modes at once.\n");
+  exitPrintUsage();
+}
+
+void parseOpts(int argc, char* argv[], Options* cli_options) {
   int opt;
+  int sc_modern = 0;
+  int sc_legacy = 0;
+  int xo_chip = 0;
 
   cli_options->emulator_type = CHIP8;
 
-  while ((opt = getopt(argc, argv, "f:dnox")) != -1) {
+  while ((opt = getopt(argc, argv, "f:dhnox")) != -1) {
     switch (opt) {
       case 'f':
         cli_options->rom_file = optarg;
@@ -25,27 +38,36 @@ void parseOptions(int argc, char* argv[], Options* cli_options) {
       case 'd':
         cli_options->debug_active = 1;
         break;
-      case 'o':
-        cli_options->emulator_type = SUPER_CHIP_LEGACY;
-        break;
+      case 'h':
+        exitPrintUsage();
       case 'n':
+        if (sc_legacy || xo_chip) { exitModeCheck(); }
+        sc_modern= 1;
         cli_options->emulator_type = SUPER_CHIP_MODERN;
         break;
+      case 'o':
+        if (sc_modern || xo_chip) { exitModeCheck(); }
+        sc_legacy = 1;
+        cli_options->emulator_type = SUPER_CHIP_LEGACY;
+        break;
       case 'x':
+        if (sc_modern || sc_legacy) { exitModeCheck(); }
+        xo_chip = 1;
         cli_options->emulator_type = XO_CHIP;
+        break;
       case '?':
         if (optopt == 'f') {
-          printf("Error: (main) No ROM to load supplied.\n");
+          printf("Error: (parseOpts) No ROM to load supplied.\n");
           exitPrintUsage();
         } else if (isprint(optopt)) {
-          printf("Error: (main) Unknown option `-%c'.\n", optopt);
+          printf("Error: (parseOpts) Unknown option `-%c'.\n", optopt);
           exitPrintUsage();
         } else {
-          printf("Error: (main) Unknown option character `\\x%x'.\n", optopt);
+          printf("Error: (parseOpts) Unknown option `\\x%x'.\n", optopt);
           exitPrintUsage();
         }
       default:
-        printf("Error: (main) Could not parse command line arguments!\n");
+        printf("Error: (parseOpts) Parsing command line arguments failed.\n");
         exitPrintUsage();
     }
   }
@@ -61,7 +83,7 @@ int main(int argc, char* argv[]) {
   opterr = 0;
   struct options cli_options = { 0, NULL };
 
-  parseOptions(argc, argv, &cli_options);
+  parseOpts(argc, argv, &cli_options);
 
   Emulator emulator;
 
