@@ -14,7 +14,7 @@ chip8-emulator -f <path-to-rom> [-dhnox]
 ```
 
 Further planned features to practice before working on a GBA emulator include:
-   - [ ] A debugging interface with ~~SDL3~~ (probably) [Nuklear](https://immediate-mode-ui.github.io/Nuklear/)
+   - [ ] A debugging interface with SDL3
    - [x] Proper command line flag support
    - [ ] Support for the newer/different version of Chip8 (Super Chip etc.)
 
