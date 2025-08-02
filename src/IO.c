@@ -26,13 +26,20 @@ uint8_t key_to_position[16] = {
   0x3, 0x7, 0xB, 0xF
 };
 
-int IOInit(IO* io, int width, int height) {
+int IOInit(IO* io, int width, int height, int debug_active) {
   memset(io->keys_pressed, 0, 16);
   io->key_pressed = -1;
   io->key_released= -1;
 
   io->width = width;
   io->height = height;
+  io->debug_width = 0;
+  io->debug_height = 0;
+
+  if (debug_active) {
+    io->debug_width += 32;
+    io->debug_height += 32;
+  }
 
   if (screenInit(io, width, height) != 0) {
     printf("Error: (IOInit) Could not initialize screen.\n");
@@ -51,8 +58,8 @@ int screenInit(IO* io, int width, int height) {
 
   result = SDL_CreateWindowAndRenderer(
     "Chip8 Emulator",
-    width * SCALING_FACTOR,
-    height * SCALING_FACTOR,
+    (width + io->debug_width) * SCALING_FACTOR,
+    (height + io->debug_height) * SCALING_FACTOR,
     SDL_WINDOW_ALWAYS_ON_TOP,
     &(io->window),
     &(io->renderer)
@@ -66,13 +73,27 @@ int screenInit(IO* io, int width, int height) {
   return OK;
 }
 
+int screenGetPosition(IO* io, int x, int y) {
+  return y * io->width + x;
+}
+
+void screenDrawRect(IO* io, int x, int y, int width, int height) {
+    SDL_FRect r = {
+      x * SCALING_FACTOR,
+      y * SCALING_FACTOR,
+      width,
+      height
+    };
+    SDL_RenderFillRect(io->renderer, &r);
+}
+
 void screenDraw(IO* io, uint8_t pixels[]) {
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(io->renderer);
 
   for (size_t y = 0; y < io->height; y++) {
     for (size_t x = 0; x < io->width; x++) {
-      uint8_t value = pixels[y * io->width + x];
+      uint8_t value = pixels[screenGetPosition(io, x, y)];
 
       if (value > 0) {
         SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -80,15 +101,14 @@ void screenDraw(IO* io, uint8_t pixels[]) {
         SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
       }
 
-      SDL_FRect r = {
-        x * SCALING_FACTOR,
-        y * SCALING_FACTOR,
-        SCALING_FACTOR,
-        SCALING_FACTOR
-      };
-      SDL_RenderFillRect(io->renderer, &r);
+      screenDrawRect(io, x, y, SCALING_FACTOR, SCALING_FACTOR);
     }
   }
+
+  SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+  screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
+  screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
+
   SDL_RenderPresent(io->renderer);
 }
 

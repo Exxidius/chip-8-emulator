@@ -20,14 +20,18 @@ typedef struct IO {
   int key_released;
   int width;
   int height;
+  int debug_width;
+  int debug_height;
 } IO;
 
 int screenInit(IO* io, int width, int height);
 int screenCleanup(IO* io);
+int screenGetPosition(IO* io, int x, int y);
 
 void screenDraw(IO* io, uint8_t pixels[]);
+void screenDrawRect(IO* io, int x, int y, int width, int height);
 
-int IOInit(IO* io, int width, int height);
+int IOInit(IO* io, int width, int height, int debug_active);
 int IOPoll(IO* io);
 int IOCheckKeyPressed(IO* io, uint8_t VX);
 int IOGetKeyPressed(IO* io);

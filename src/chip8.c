@@ -56,7 +56,12 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
   }
 
   emulator->io = (IO*) malloc(sizeof(IO));
-  if (IOInit(emulator->io, DISPLAY_WIDTH, DISPLAY_HEIGHT) != 0) {
+  if (IOInit(
+        emulator->io,
+        DISPLAY_WIDTH,
+        DISPLAY_HEIGHT,
+        emulator->cli_options->debug_active
+    ) != 0) {
     printf("Error: (emulatorInit) Could not initialize IO.\n");
     return ERROR;
   }
