@@ -1,7 +1,7 @@
 CC = gcc
 
-CFLAGS = -Wall -std=gnu2x $(shell pkg-config --cflags sdl3)
-LDFLAGS = $(shell pkg-config --libs sdl3)
+CFLAGS = -Wall -std=gnu2x $(shell pkg-config --cflags sdl3 sdl3-ttf)
+LDFLAGS = $(shell pkg-config --libs sdl3 sdl3-ttf)
 
 SRC = *.c
 OUT = chip8-emulator

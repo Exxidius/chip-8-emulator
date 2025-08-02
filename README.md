@@ -3,8 +3,8 @@
 A Chip8 emulator written in C to practice emulation.
 
 The main implementation is now finished and can be built using the Makefile in the src directory.
-You will need SDL3 to build the emulator as this library is used to emulate the display.
-Please find installation instructions for SDL3 directly on the [libsdl](https://www.libsdl.org) website.
+You will need SDL3 and SDL3-ttf to build the emulator as these libraries are used to emulate the display.
+Please find installation instructions for SDL3/SDL3-ttf directly on the [libsdl](https://www.libsdl.org) website.
 
 To build the emulator run ``make`` in the src directory.
 This will output the binary ``chip8-emulator`` - the emulator can than be run with the following command
