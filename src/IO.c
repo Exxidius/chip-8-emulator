@@ -61,6 +61,8 @@ int screenInit(IO* io, int width, int height) {
     return ERROR;
   }
 
+  // TODO: adapt to only init if debug is active
+  //       do not init otherwise
   result = TTF_Init();
   if (result < 0) {
     printf("Error: (IOInit) Could not initialize font.");
@@ -122,6 +124,8 @@ void screenDraw(IO* io, uint8_t pixels[]) {
     }
   }
 
+  // TODO: adapt to only render if debug is active
+  //       do not render otherwise
   SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
   screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
