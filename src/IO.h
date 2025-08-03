@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_scancode.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "inttypes.h"
 
@@ -10,14 +11,22 @@
 #define SCALING_FACTOR 8
 
 typedef struct IO {
+  // SDL Handling
   SDL_Window *window;
   SDL_Renderer *renderer;
   SDL_Surface *surface;
   SDL_Texture *texture;
   SDL_Event event;
+
+  // Font handling
+  TTF_Font *font;
+  SDL_Texture* font_texture;
+
   uint8_t keys_pressed[16];
   int key_pressed;
   int key_released;
+
+  // Window information
   int width;
   int height;
   int debug_width;
