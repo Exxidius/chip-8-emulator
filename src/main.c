@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 
   Emulator emulator;
 
-  if (emulatorInit(&emulator, &cli_options) != 0) {
+  if (emulatorInit(&emulator, &cli_options) != OK) {
     printf("Error: (main) Could not initialize Emulator.\n");
     exit(ERROR);
   }

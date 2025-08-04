@@ -36,9 +36,14 @@ typedef struct IO {
 int screenInit(IO* io, int width, int height);
 int screenCleanup(IO* io);
 int screenGetPosition(IO* io, int x, int y);
+int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos);
+int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers);
+int screenDrawRegs(IO* io, uint8_t* registers);
+int screenDrawInstructions(IO* io, uint8_t* memory);
 
 void screenDraw(IO* io, uint8_t pixels[]);
 void screenDrawRect(IO* io, int x, int y, int width, int height);
+void screenRenderPresent(IO* io);
 
 int IOInit(IO* io, int width, int height, int debug_active);
 int IOPoll(IO* io);

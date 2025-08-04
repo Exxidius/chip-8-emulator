@@ -69,6 +69,7 @@ typedef struct Emulator {
 
 int emulatorInit(Emulator* emulator, Options* cli_options);
 int emulatorLoop(Emulator* emulator);
+int emulatorDraw(Emulator* emulator);
 int emulatorCleanup(Emulator* emulator);
 int emulatorTimer60Hz(Emulator* emulator);
 int emulatorDecodeExecute(Emulator* emulator);

@@ -44,11 +44,10 @@ int IOInit(IO* io, int width, int height, int debug_active) {
     io->debug_height += 32;
   }
 
-  if (screenInit(io, width, height) != 0) {
+  if (screenInit(io, width, height) != OK) {
     printf("Error: (IOInit) Could not initialize screen.\n");
     return ERROR;
   }
-
 
   return OK;
 }
@@ -61,8 +60,6 @@ int screenInit(IO* io, int width, int height) {
     return ERROR;
   }
 
-  // TODO: adapt to only init if debug is active
-  //       do not init otherwise
   result = TTF_Init();
   if (result < 0) {
     printf("Error: (IOInit) Could not initialize font.");
@@ -106,6 +103,70 @@ void screenDrawRect(IO* io, int x, int y, int width, int height) {
     SDL_RenderFillRect(io->renderer, &r);
 }
 
+int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos) {
+  SDL_Surface* text_s = NULL;
+  SDL_Color color = { 255, 255, 255, SDL_ALPHA_OPAQUE };
+
+  text_s = TTF_RenderText_Blended(io->font, text, len, color);
+  if (text_s == NULL) {
+    printf("Error: (screenDrawText) Couldn't create text.\n");
+    return ERROR;
+  }
+
+  io->texture = SDL_CreateTextureFromSurface(io->renderer, text_s);
+  SDL_DestroySurface(text_s);
+
+  if (io->texture == NULL) {
+    printf("Error: (screenDrawText) Couldn't create texture.\n");
+    return ERROR;
+  }
+
+  SDL_GetTextureSize(io->texture, &(pos->w), &(pos->h));
+  SDL_RenderTexture(io->renderer, io->texture, NULL, pos);
+
+  return OK;
+}
+
+int screenDrawRegs(IO* io, uint8_t* registers) {
+  // TODO: implement me
+  return OK;
+}
+
+int screenDrawInstructions(IO* io, uint8_t* memory) {
+  SDL_FRect r = {
+    (io->width + 10) * SCALING_FACTOR,
+    SCALING_FACTOR,
+    0,
+    0
+  };
+
+  if (screenDrawText(io, "Instructions", 9, &r) != OK) {
+    printf("Error: (screenDrawRegs) Couldn't draw Text.\n");
+    return ERROR;
+  }
+
+  // TODO: implement me
+  return OK;
+}
+
+int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers) {
+  SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+  screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
+  screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
+
+  if (screenDrawRegs(io, registers) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw Registers to screen.\n");
+    return ERROR;
+  }
+
+  if (screenDrawInstructions(io, memory) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw Instrs. to screen.\n");
+    return ERROR;
+  }
+
+  return OK;
+}
+
 void screenDraw(IO* io, uint8_t pixels[]) {
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(io->renderer);
@@ -123,38 +184,11 @@ void screenDraw(IO* io, uint8_t pixels[]) {
       screenDrawRect(io, x, y, SCALING_FACTOR, SCALING_FACTOR);
     }
   }
+}
 
-  // TODO: adapt to only render if debug is active
-  //       do not render otherwise
-  SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-  screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
-  screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
-
-  SDL_Surface* text = NULL;
-  SDL_Color color = { 255, 255, 255, SDL_ALPHA_OPAQUE };
-
-  text = TTF_RenderText_Blended(io->font, "Registers", 0, color);
-  if (text) {
-    io->texture = SDL_CreateTextureFromSurface(io->renderer, text);
-    SDL_DestroySurface(text);
-  }
-
-  if (!io->texture) {
-    SDL_Log("Couldn't create text.\n");
-  }
-
-  int w = 0, h = 0;
-  SDL_FRect dst;
-
-  /* Center the text and scale it up */
-  SDL_GetRenderOutputSize(io->renderer, &w, &h);
-  SDL_GetTextureSize(io->texture, &dst.w, &dst.h);
-  dst.x = (io->width + 10) * SCALING_FACTOR;
-  dst.y = SCALING_FACTOR;
-
-  SDL_RenderTexture(io->renderer, io->texture, NULL, &dst);
-
+void screenRenderPresent(IO* io) {
   SDL_RenderPresent(io->renderer);
+  io->texture = NULL;
 }
 
 int screenCleanup(IO* io) {

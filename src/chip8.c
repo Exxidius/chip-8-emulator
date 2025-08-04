@@ -50,7 +50,7 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
   fread(emulator->memory + 0x200, 1, MEMORY_SIZE - 0x200, emulator->rom_fd);
 
   emulator->call_stack = (Stack*) malloc(sizeof(Stack));
-  if (stackInit(emulator->call_stack) != 0) {
+  if (stackInit(emulator->call_stack) != OK) {
     printf("Error: (emulatorInit) Could not initialize stack.\n");
     return ERROR;
   }
@@ -61,7 +61,7 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
         DISPLAY_WIDTH,
         DISPLAY_HEIGHT,
         emulator->cli_options->debug_active
-    ) != 0) {
+    ) != OK) {
     printf("Error: (emulatorInit) Could not initialize IO.\n");
     return ERROR;
   }
@@ -71,7 +71,11 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
   emulator->delay_timer = 0;
   emulator->sound_timer = 0;
 
-  screenDraw(emulator->io, emulator->display);
+  if (emulatorDraw(emulator) != OK) {
+    printf("Error: (emulatorInit) Could draw to screen.\n");
+    return ERROR;
+  }
+
   emulator->running = 1;
   emulator->paused = 0;
 
@@ -84,7 +88,7 @@ int emulatorLoop(Emulator* emulator) {
 
     emulatorFetch(emulator);
 
-    if (emulatorDecodeExecute(emulator) != 0) {
+    if (emulatorDecodeExecute(emulator) != OK) {
       printf("Error: (emulatorLoop) Could not execute Instruction.\n");
       return ERROR;
     }
@@ -95,6 +99,26 @@ int emulatorLoop(Emulator* emulator) {
       emulator->running = 0;
     }
   }
+  return OK;
+}
+
+int emulatorDraw(Emulator* emulator) {
+  screenDraw(emulator->io, emulator->display);
+
+  if (emulator->cli_options->debug_active) {
+    int result = screenDrawDebugUI(
+      emulator->io,
+      emulator->memory,
+      emulator->regs
+    );
+
+    if (result != OK) {
+      printf("Error: (emulatorDraw) Could not draw debug UI. Aborting.\n");
+      return ERROR;
+    }
+  }
+
+  screenRenderPresent(emulator->io);
   return OK;
 }
 
@@ -116,7 +140,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
 
   switch (first_nibble) {
     case 0x0:
-      if (OpCode0x0(emulator) != 0) {
+      if (OpCode0x0(emulator) != OK) {
         printf("Error: (emulatorDecodeExecute) OpCode0x0 failed.\n");
         return ERROR;
       }
@@ -134,7 +158,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
       OpCode0x4(emulator, X, NN);
       break;
     case 0x5:
-      if (OpCode0x5(emulator, X, Y, N) != 0) {
+      if (OpCode0x5(emulator, X, Y, N) != OK) {
         printf("Error: (emulatorDecodeExecute) OpCode0x5 failed.\n");
         return ERROR;
       }
@@ -146,7 +170,7 @@ int emulatorDecodeExecute(Emulator* emulator) {
       OpCode0x7(emulator, X, NN);
       break;
     case 0x8:
-      if (OpCode0x8(emulator, X, Y, N) != 0) {
+      if (OpCode0x8(emulator, X, Y, N) != OK) {
         printf("Error: (emulatorDecodeExecute) OpCode0x8 failed.\n");
         return ERROR;
       }
@@ -164,16 +188,19 @@ int emulatorDecodeExecute(Emulator* emulator) {
       OpCode0xC(emulator, X, NN);
       break;
     case 0xD:
-      OpCode0xD(emulator, X, Y, N);
+      if (OpCode0xD(emulator, X, Y, N) != OK) {
+        printf("Error: (emulatorDecodeExecute) OpCode0xD failed.\n");
+        return ERROR;
+      }
       break;
     case 0xE:
-      if (OpCode0xE(emulator, X, NN) != 0) {
+      if (OpCode0xE(emulator, X, NN) != OK) {
         printf("Error: (emulatorDecodeExecute) OpCode0xE failed.\n");
         return ERROR;
       }
       break;
     case 0xF:
-      if (OpCode0xF(emulator, X, NN) != 0) {
+      if (OpCode0xF(emulator, X, NN) != OK) {
         printf("Error: (emulatorDecodeExecute) OpCode0xF failed.\n");
         return ERROR;
       }
@@ -433,7 +460,11 @@ int OpCode0xD(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
     disp_y++;
   }
 
-  screenDraw(emulator->io, emulator->display);
+  if (emulatorDraw(emulator) != OK) {
+    printf("Error: (OpCode0xE) Could not draw to screen.\n");
+    return ERROR;
+  }
+
   return OK;
 }
 
