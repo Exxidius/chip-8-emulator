@@ -84,19 +84,31 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
 
 int emulatorLoop(Emulator* emulator) {
   while (emulator->running) {
-    emulatorHandleTimer(emulator);
+    if (!emulator->paused) {
+      emulatorHandleTimer(emulator);
 
-    emulatorFetch(emulator);
+      emulatorFetch(emulator);
 
-    if (emulatorDecodeExecute(emulator) != OK) {
-      printf("Error: (emulatorLoop) Could not execute Instruction.\n");
-      return ERROR;
+      if (emulatorDecodeExecute(emulator) != OK) {
+        printf("Error: (emulatorLoop) Could not execute Instruction.\n");
+        return ERROR;
+      }
+
+      emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
     }
 
-    emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
+    switch (IOPoll(emulator->io)) {
+      case QUIT:
+        emulator->running = 0;
+        break;
 
-    if (IOPoll(emulator->io) == QUIT) {
-      emulator->running = 0;
+      case PAUSE:
+        emulator->paused = !emulator->paused;
+        break;
+
+      default:
+        //TODO: handle case
+        break;
     }
   }
   return OK;

@@ -24,6 +24,7 @@
 #define ERROR -1
 #define NO_KEY_PRESSED -2
 #define QUIT -3
+#define PAUSE -4
 #define OK 0
 
 typedef enum {

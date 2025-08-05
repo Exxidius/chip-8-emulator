@@ -66,7 +66,7 @@ int screenInit(IO* io, int width, int height) {
     return ERROR;
   }
 
-  io->font = TTF_OpenFontIO(SDL_IOFromConstMem(tiny_ttf, tiny_ttf_len), true, 18.0f);
+  io->font = TTF_OpenFontIO(SDL_IOFromConstMem(tiny_ttf, tiny_ttf_len), true, 22.0f);
   if (!io->font) {
     printf("Couldn't open font.\n");
     return ERROR;
@@ -128,23 +128,48 @@ int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos) {
 }
 
 int screenDrawRegs(IO* io, uint8_t* registers) {
-  // TODO: implement me
-  return OK;
-}
-
-int screenDrawInstructions(IO* io, uint8_t* memory) {
   SDL_FRect r = {
-    (io->width + 10) * SCALING_FACTOR,
-    SCALING_FACTOR,
+    (io->width + 9) * SCALING_FACTOR + 4,
+    SCALING_FACTOR + 2,
     0,
     0
   };
 
-  if (screenDrawText(io, "Instructions", 9, &r) != OK) {
-    printf("Error: (screenDrawRegs) Couldn't draw Text.\n");
-    return ERROR;
+  if (screenDrawText(io, "Registers", 9, &r) != OK) {
+    goto error;
   }
 
+  // VX: 0xVV --> 8 characters + 0 byte
+  char reg[9];
+
+  for (int i = 0; i < NUMBER_REGS; i++) {
+    if (i <= 7) {
+      r.x = (io->width + 1) * SCALING_FACTOR + 1;
+    } else {
+      r.x = (io->width + 17) * SCALING_FACTOR + 2;
+    }
+
+    if (i == 8) {
+      r.y = SCALING_FACTOR + 5;
+    }
+
+    r.y += SCALING_FACTOR + 18;
+
+    snprintf(reg, 9, "V%X: 0x%02X", i, registers[i]);
+
+    if (screenDrawText(io, reg, 8, &r) != OK) {
+      goto error;
+    }
+  }
+
+  return OK;
+
+  error:
+    printf("Error: (screenDrawRegs) Couldn't draw Text.\n");
+    return ERROR;
+}
+
+int screenDrawInstructions(IO* io, uint8_t* memory) {
   // TODO: implement me
   return OK;
 }
@@ -153,6 +178,7 @@ int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers) {
   SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
   screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
+  screenDrawRect(io, io->width, io->height, io->debug_width * SCALING_FACTOR, 1);
 
   if (screenDrawRegs(io, registers) != OK) {
     printf("Error: (screenDrawDebugUI) Couldn't draw Registers to screen.\n");
@@ -207,6 +233,7 @@ int screenCleanup(IO* io) {
 
 int IOPoll(IO* io) {
   bool event_outstanding = SDL_PollEvent(&(io->event));
+  int paused = 0;
 
   while (event_outstanding) {
     switch (io->event.type) {
@@ -215,19 +242,33 @@ int IOPoll(IO* io) {
         break;
 
       case SDL_EVENT_KEY_DOWN:
-        IOSetKey(io, io->event.key.scancode);
+        switch (io->event.key.scancode) {
+          case SDL_SCANCODE_P:
+            paused = 1;
+            break;
+
+          default:
+            IOSetKey(io, io->event.key.scancode);
+            break;
+        }
         break;
 
       case SDL_EVENT_KEY_UP:
         IOResetKey(io, io->event.key.scancode);
         break;
 
+      // TODO: check other events from SDL?
       default:
         break;
     }
 
     event_outstanding = SDL_PollEvent(&(io->event));
   }
+
+  if (paused) {
+    return PAUSE;
+  }
+
   return OK;
 }
 
