@@ -81,7 +81,7 @@ void parseOpts(int argc, char* argv[], Options* cli_options) {
 int main(int argc, char* argv[]) {
   // Disable error printing from getopt - handled in here
   opterr = 0;
-  struct options cli_options = { 0, NULL };
+  Options cli_options = { 0, NULL };
 
   parseOpts(argc, argv, &cli_options);
 

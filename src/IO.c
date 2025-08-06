@@ -169,24 +169,48 @@ int screenDrawRegs(IO* io, uint8_t* registers) {
     return ERROR;
 }
 
-int screenDrawInstructions(IO* io, uint8_t* memory) {
+int screendDrawGeneralInfo(IO* io, uint8_t* memory, uint16_t PC, uint16_t I) {
   // TODO: implement me
   return OK;
 }
 
-int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers) {
-  SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-  screenDrawRect(io, io->width, 0, 1, io->height * SCALING_FACTOR + 1);
-  screenDrawRect(io, 0, io->height, io->width * SCALING_FACTOR, 1);
-  screenDrawRect(io, io->width, io->height, io->debug_width * SCALING_FACTOR, 1);
+int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory) {
+  // TODO: implement me
+  return OK;
+}
 
-  if (screenDrawRegs(io, registers) != OK) {
-    printf("Error: (screenDrawDebugUI) Couldn't draw Registers to screen.\n");
+int screenDrawCallStack(IO* io, Stack* stack) {
+  // TODO: implement me
+  return OK;
+}
+
+int screenDrawDebugUI(IO* io, DebugInformation* info) {
+  SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+  int full_width = io->width + io->debug_width;
+  int full_height = io->height + io->debug_height;
+  int debug_height = io->debug_height * SCALING_FACTOR;
+  screenDrawRect(io, io->width, 0, 1, full_height * SCALING_FACTOR + 1);
+  screenDrawRect(io, 0, io->height, full_width * SCALING_FACTOR, 1);
+  screenDrawRect(io, io->width / 2, io->height, 1, debug_height);
+
+  if (screenDrawRegs(io, info->regs) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw registers to screen.\n");
     return ERROR;
   }
 
-  if (screenDrawInstructions(io, memory) != OK) {
-    printf("Error: (screenDrawDebugUI) Couldn't draw Instrs. to screen.\n");
+  if (screenDrawInstructions(io, info->PC, info->memory) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw instrs. to screen.\n");
+    return ERROR;
+  }
+
+  if (screendDrawGeneralInfo(io, info->memory, info->PC, info->I) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw gen. info to screen.\n");
+    return ERROR;
+  }
+
+  if (screenDrawCallStack(io, info->stack) != OK) {
+    printf("Error: (screenDrawDebugUI) Couldn't draw call stack to screen.\n");
     return ERROR;
   }
 
@@ -194,6 +218,7 @@ int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers) {
 }
 
 void screenDraw(IO* io, uint8_t pixels[]) {
+  // TODO: speed me up --> no pixel per pixel drawing
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(io->renderer);
 

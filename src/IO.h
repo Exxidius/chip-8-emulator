@@ -4,6 +4,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "inttypes.h"
+#include "stack.h"
 
 #ifndef IO_H
 #define IO_H
@@ -33,13 +34,23 @@ typedef struct IO {
   int debug_height;
 } IO;
 
+typedef struct DebugInformation {
+  uint8_t* memory;
+  uint8_t* regs;
+  Stack* stack;
+  uint16_t PC;
+  uint16_t I;
+} DebugInformation;
+
 int screenInit(IO* io, int width, int height);
 int screenCleanup(IO* io);
 int screenGetPosition(IO* io, int x, int y);
 int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos);
-int screenDrawDebugUI(IO* io, uint8_t* memory, uint8_t* registers);
+int screenDrawDebugUI(IO* io, DebugInformation* info);
 int screenDrawRegs(IO* io, uint8_t* registers);
-int screenDrawInstructions(IO* io, uint8_t* memory);
+int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory);
+int screenDrawCallStack(IO* io, Stack* stack);
+int screendDrawGeneralInfo(IO* io, uint8_t* memory, uint16_t PC, uint16_t I);
 
 void screenDraw(IO* io, uint8_t pixels[]);
 void screenDrawRect(IO* io, int x, int y, int width, int height);

@@ -129,11 +129,15 @@ int emulatorDraw(Emulator* emulator) {
   screenDraw(emulator->io, emulator->display);
 
   if (emulator->cli_options->debug_active) {
-    int result = screenDrawDebugUI(
-      emulator->io,
-      emulator->memory,
-      emulator->regs
-    );
+    DebugInformation info = {
+      .memory = emulator->memory,
+      .regs = emulator->regs,
+      .stack = emulator->call_stack,
+      .PC = emulator->PC,
+      .I = emulator->I
+    };
+
+    int result = screenDrawDebugUI(emulator->io, &info);
 
     if (result != OK) {
       printf("Error: (emulatorDraw) Could not draw debug UI. Aborting.\n");

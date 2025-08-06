@@ -39,7 +39,7 @@ typedef enum {
   XO_CHIP,
 } emulator_t;
 
-typedef struct options {
+typedef struct Options {
   uint8_t debug_active;
   char* rom_file;
   emulator_t emulator_type;
