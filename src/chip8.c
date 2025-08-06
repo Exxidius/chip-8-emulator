@@ -78,13 +78,15 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
 
   emulator->running = 1;
   emulator->paused = 0;
+  emulator->step_mode = 0;
+  emulator->should_step = 0;
 
   return OK;
 }
 
 int emulatorLoop(Emulator* emulator) {
   while (emulator->running) {
-    if (!emulator->paused) {
+    if (!emulator->paused && (!emulator->step_mode || emulator->should_step)) {
       emulatorHandleTimer(emulator);
 
       emulatorFetch(emulator);
@@ -95,22 +97,31 @@ int emulatorLoop(Emulator* emulator) {
       }
 
       emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
+
+      if (emulator->step_mode) {
+        emulator->should_step = 0;
+      }
     }
 
-    switch (IOPoll(emulator->io)) {
-      case QUIT:
-        emulator->running = 0;
-        break;
+    int result = IOPoll(emulator->io);
 
-      case PAUSE:
-        emulator->paused = !emulator->paused;
-        break;
+    if (result == QUIT) {
+      emulator->running = 0;
+    }
 
-      default:
-        //TODO: handle case
-        break;
+    if ((result & PAUSE) == PAUSE) {
+      emulator->paused = !emulator->paused;
+    }
+
+    if ((result & STEP_MODE) == STEP_MODE) {
+      emulator->step_mode = !emulator->step_mode;
+    }
+
+    if ((result & SHOULD_STEP) == SHOULD_STEP) {
+      emulator->should_step = 1;
     }
   }
+
   return OK;
 }
 

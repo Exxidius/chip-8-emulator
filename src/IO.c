@@ -233,19 +233,29 @@ int screenCleanup(IO* io) {
 
 int IOPoll(IO* io) {
   bool event_outstanding = SDL_PollEvent(&(io->event));
-  int paused = 0;
+  int result = 0;
 
   while (event_outstanding) {
     switch (io->event.type) {
       case SDL_EVENT_QUIT:
         return QUIT;
-        break;
 
       case SDL_EVENT_KEY_DOWN:
         switch (io->event.key.scancode) {
           case SDL_SCANCODE_P:
-            paused = 1;
+            result |= PAUSE;
             break;
+
+          case SDL_SCANCODE_M:
+            result |= STEP_MODE;
+            break;
+
+          case SDL_SCANCODE_N:
+            result |= SHOULD_STEP;
+            break;
+
+          case SDL_SCANCODE_ESCAPE:
+            return QUIT;
 
           default:
             IOSetKey(io, io->event.key.scancode);
@@ -256,20 +266,12 @@ int IOPoll(IO* io) {
       case SDL_EVENT_KEY_UP:
         IOResetKey(io, io->event.key.scancode);
         break;
-
-      // TODO: check other events from SDL?
-      default:
-        break;
     }
 
     event_outstanding = SDL_PollEvent(&(io->event));
   }
 
-  if (paused) {
-    return PAUSE;
-  }
-
-  return OK;
+  return result;
 }
 
 void IOSetKey(IO* io, SDL_Scancode key) {

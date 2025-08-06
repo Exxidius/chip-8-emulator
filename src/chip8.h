@@ -24,8 +24,13 @@
 #define ERROR -1
 #define NO_KEY_PRESSED -2
 #define QUIT -3
-#define PAUSE -4
 #define OK 0
+
+// Values get ored together for return
+// from input key handling
+#define PAUSE 2
+#define STEP_MODE 4
+#define SHOULD_STEP 8
 
 typedef enum {
   CHIP8,
@@ -51,6 +56,8 @@ typedef struct Emulator {
 
   uint8_t running;
   uint8_t paused;
+  uint8_t step_mode;
+  uint8_t should_step;
 
   FILE* rom_fd;
 
