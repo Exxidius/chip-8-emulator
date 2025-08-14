@@ -63,7 +63,7 @@ int screenInit(IO* io, int width, int height) {
     return ERROR;
   }
 
-  io->font = TTF_OpenFont("../res/UbuntuMono-R.ttf", 22.0f);
+  io->font = TTF_OpenFont("res/UbuntuMono-R.ttf", 22.0f);
   if (!io->font) {
     printf("Couldn't open font.\n");
     return ERROR;
