@@ -24,7 +24,7 @@ The 0 button resets the emulator and the loaded rom will start from the beginnin
 
 When launching the emulator in debug mode, the pause mode is activated by default.
 
-If the debug mode is on (with the ``-d`` flag), all values shown will get updated after every instruction only if the step mode is also on.
+Furthermore if the debug mode is on, all values shown will get updated after every instruction only if the step mode is also on.
 In the case that step mode is not active, the values of the Debug UI will only get updated after every instruction that needs drawing to the screen (0x00E0 or 0xD).
 
 Further planned features to practice before working on a GBA emulator include:
