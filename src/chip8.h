@@ -23,7 +23,6 @@
 // Return Codes
 #define ERROR -1
 #define NO_KEY_PRESSED -2
-#define QUIT -3
 #define OK 0
 
 // Values get ored together for return
@@ -31,6 +30,8 @@
 #define PAUSE 2
 #define STEP_MODE 4
 #define SHOULD_STEP 8
+#define RESET 16
+#define QUIT 32
 
 typedef enum {
   CHIP8,
@@ -81,15 +82,14 @@ int emulatorDraw(Emulator* emulator);
 int emulatorCleanup(Emulator* emulator);
 int emulatorTimer60Hz(Emulator* emulator);
 int emulatorDecodeExecute(Emulator* emulator);
+int emulatorReset(Emulator* emulator);
 
 void emulatorFetch(Emulator* emulator);
 void emulatorStore(Emulator* emulator, uint16_t X);
 void emulatorLoad(Emulator* emulator, uint16_t X);
 
 size_t emulatorCurrentTime_ms();
-
 void emulatorHandleTimer(Emulator* emulator);
-void emulatorSleep_ms(size_t ms);
 
 int OpCode0x0(Emulator* emulator);
 int OpCode0x1(Emulator* emulator, uint16_t NNN);

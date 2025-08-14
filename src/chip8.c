@@ -71,15 +71,45 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
   emulator->delay_timer = 0;
   emulator->sound_timer = 0;
 
+  emulator->running = 1;
+  emulator->paused = 1;
+  emulator->step_mode = 0;
+  emulator->should_step = 0;
+
   if (emulatorDraw(emulator) != OK) {
     printf("Error: (emulatorInit) Could draw to screen.\n");
     return ERROR;
   }
 
+  return OK;
+}
+
+int emulatorReset(Emulator* emulator) {
+  memset(emulator->display, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
+  memset(emulator->regs, 0, NUMBER_REGS);
+
+  emulator->PC = 0x200;
+  emulator->I = 0;
+
+  if (!emulator->rom_fd) {
+    printf("Error: (emulatorInit) Could not open ROM file\n");
+    return ERROR;
+  }
+
+  if (stackInit(emulator->call_stack) != OK) {
+    printf("Error: (emulatorInit) Could not initialize stack.\n");
+    return ERROR;
+  }
+
   emulator->running = 1;
-  emulator->paused = 0;
+  emulator->paused = 1;
   emulator->step_mode = 0;
   emulator->should_step = 0;
+
+  if (emulatorDraw(emulator) != OK) {
+    printf("Error: (emulatorReset) Could draw to screen.\n");
+    return ERROR;
+  }
 
   return OK;
 }
@@ -96,9 +126,13 @@ int emulatorLoop(Emulator* emulator) {
         return ERROR;
       }
 
-      emulatorSleep_ms((float)1000 / INSTRUCTIONS_FREQUENCY);
+      SDL_Delay((float)1000 / INSTRUCTIONS_FREQUENCY);
 
       if (emulator->step_mode) {
+        if (emulatorDraw(emulator) != OK) {
+          printf("Error: (emulatorDraw) Could not draw to screen.\n");
+          return ERROR;
+        }
         emulator->should_step = 0;
       }
     }
@@ -111,14 +145,28 @@ int emulatorLoop(Emulator* emulator) {
 
     if ((result & PAUSE) == PAUSE) {
       emulator->paused = !emulator->paused;
+      // Need to display paused
+      if (emulatorDraw(emulator) != OK) {
+        printf("Error: (emulatorDraw) Could not draw to screen.\n");
+        return ERROR;
+      }
     }
 
     if ((result & STEP_MODE) == STEP_MODE) {
       emulator->step_mode = !emulator->step_mode;
+      // Need to display step mode
+      if (emulatorDraw(emulator) != OK) {
+        printf("Error: (emulatorDraw) Could not draw to screen.\n");
+        return ERROR;
+      }
     }
 
     if ((result & SHOULD_STEP) == SHOULD_STEP) {
       emulator->should_step = 1;
+    }
+
+    if ((result & RESET) == RESET) {
+      emulatorReset(emulator);
     }
   }
 
@@ -286,6 +334,7 @@ int emulatorTimer60Hz(Emulator* emulator) {
 }
 
 int emulatorCleanup(Emulator* emulator) {
+  fclose(emulator->rom_fd);
   free(emulator->call_stack);
 
   screenCleanup(emulator->io);
@@ -301,17 +350,15 @@ size_t emulatorCurrentTime_ms() {
   return (size_t)(ts.tv_sec) * 1000 + (ts.tv_nsec / 1000000);
 }
 
-void emulatorSleep_ms(size_t ms) {
-  struct timespec req;
-  req.tv_sec = 0;
-  req.tv_nsec = 1000000 * ms;
-  nanosleep(&req, NULL);
-}
-
 int OpCode0x0(Emulator* emulator) {
   switch (emulator->current_instruction) {
     case 0x00E0:
       memset(emulator->display, 0, DISPLAY_HEIGHT * DISPLAY_WIDTH);
+
+      if (emulatorDraw(emulator) != OK) {
+        printf("Error: (OpCode0x0) Could not draw to screen.\n");
+        return ERROR;
+      }
       break;
 
     case 0x00EE:
@@ -492,7 +539,7 @@ int OpCode0xD(Emulator* emulator, uint16_t X, uint16_t Y, uint16_t N) {
   }
 
   if (emulatorDraw(emulator) != OK) {
-    printf("Error: (OpCode0xE) Could not draw to screen.\n");
+    printf("Error: (OpCode0xD) Could not draw to screen.\n");
     return ERROR;
   }
 

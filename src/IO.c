@@ -69,19 +69,36 @@ int screenInit(IO* io, int width, int height) {
     return ERROR;
   }
 
-  result = SDL_CreateWindowAndRenderer(
+  io->window = SDL_CreateWindow(
     "Chip8 Emulator",
     (width + io->debug_width) * SCALING_FACTOR,
     (height + io->debug_height) * SCALING_FACTOR,
-    SDL_WINDOW_ALWAYS_ON_TOP,
-    &(io->window),
-    &(io->renderer)
+    SDL_WINDOW_ALWAYS_ON_TOP
   );
 
-  if (!result) {
+  if (!io->window) {
+    printf("Error: (screenInit) Couldn't create window.\n");
+    return ERROR;
+  }
+
+  io->renderer = SDL_CreateRenderer(
+    io->window,
+    NULL
+  );
+
+  if (!io->renderer) {
     printf("Error: (screenInit) Couldn't create renderer.\n");
     return ERROR;
   }
+
+  io->screen_texture = SDL_CreateTexture(
+    io->renderer,
+    SDL_PIXELFORMAT_RGBA8888,
+    SDL_TEXTUREACCESS_STREAMING,
+    width,
+    height
+  );
+  SDL_SetTextureScaleMode(io->screen_texture, SDL_SCALEMODE_NEAREST);
 
   return OK;
 }
@@ -102,6 +119,7 @@ void screenDrawRect(IO* io, int x, int y, int width, int height) {
 
 int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos) {
   SDL_Surface* text_s = NULL;
+  SDL_Texture* text_t = NULL;
   SDL_Color color = { 255, 255, 255, SDL_ALPHA_OPAQUE };
 
   text_s = TTF_RenderText_Blended(io->font, text, len, color);
@@ -110,16 +128,16 @@ int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos) {
     return ERROR;
   }
 
-  io->texture = SDL_CreateTextureFromSurface(io->renderer, text_s);
+  text_t = SDL_CreateTextureFromSurface(io->renderer, text_s);
   SDL_DestroySurface(text_s);
 
-  if (io->texture == NULL) {
+  if (text_t == NULL) {
     printf("Error: (screenDrawText) Couldn't create texture.\n");
     return ERROR;
   }
 
-  SDL_GetTextureSize(io->texture, &(pos->w), &(pos->h));
-  SDL_RenderTexture(io->renderer, io->texture, NULL, pos);
+  SDL_GetTextureSize(text_t, &(pos->w), &(pos->h));
+  SDL_RenderTexture(io->renderer, text_t, NULL, pos);
 
   return OK;
 }
@@ -228,7 +246,7 @@ int screenDrawGeneralInfo(IO* io, DebugInformation* info) {
     return ERROR;
 }
 
-int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory) {
+int screenDrawInstrs(IO* io, uint16_t PC, uint8_t* memory) {
   SDL_FRect r = {
     (io->width + 1) * SCALING_FACTOR,
     (io->height + 1) * SCALING_FACTOR,
@@ -240,12 +258,17 @@ int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory) {
     goto error;
   }
 
-  // 0xX: 0xVV --> 9 characters + 0 byte
-  char mem[10];
+  // xX: 0xVVVV --> 10 characters + 0 byte
+  char mem[11];
   int height_init = (io->height + 1) * SCALING_FACTOR + 4;
   r.y = height_init;
 
   for (int i = 0; i < 16; i++) {
+    // Dont run out of bounds
+    if (PC + i + 0x1 > MEMORY_SIZE) {
+      return OK;
+    }
+
     if (i <= 7) {
       r.x = (io->width + 1) * SCALING_FACTOR + 1;
     } else {
@@ -257,10 +280,13 @@ int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory) {
     }
 
     r.y += SCALING_FACTOR + 18;
+    uint8_t higher_byte = memory[PC + i];
+    uint8_t lower_byte = memory[PC + i + 0x1];
 
-    snprintf(mem, 10, "0x%X: 0x%02X", i, memory[PC + i]);
+    uint16_t instr = (higher_byte << 8) | lower_byte;
+    snprintf(mem, 11, "x%X: 0x%04X", i, instr);
 
-    if (screenDrawText(io, mem, 9, &r) != OK) {
+    if (screenDrawText(io, mem, 10, &r) != OK) {
       goto error;
     }
   }
@@ -332,7 +358,7 @@ int screenDrawDebugUI(IO* io, DebugInformation* info) {
     return ERROR;
   }
 
-  if (screenDrawInstructions(io, info->PC, info->memory) != OK) {
+  if (screenDrawInstrs(io, info->PC, info->memory) != OK) {
     printf("Error: (screenDrawDebugUI) Couldn't draw instrs. to screen.\n");
     return ERROR;
   }
@@ -351,28 +377,36 @@ int screenDrawDebugUI(IO* io, DebugInformation* info) {
 }
 
 void screenDraw(IO* io, uint8_t pixels[]) {
-  // TODO: speed me up --> no pixel per pixel drawing
   SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
-  SDL_RenderClear(io->renderer);
 
-  for (size_t y = 0; y < io->height; y++) {
-    for (size_t x = 0; x < io->width; x++) {
-      uint8_t value = pixels[screenGetPosition(io, x, y)];
+  int size = io->width * io->height;
+  uint32_t s_pixels[size];
 
-      if (value > 0) {
-        SDL_SetRenderDrawColor(io->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-      } else {
-        SDL_SetRenderDrawColor(io->renderer, 0x00, 0x00, 0x00, 0x00);
-      }
-
-      screenDrawRect(io, x, y, SCALING_FACTOR, SCALING_FACTOR);
-    }
+  for (int i = 0; i < size; i++) {
+    s_pixels[i] = pixels[i] ? 0xFFFFFFFF : 0xFF000000;
   }
+
+  SDL_Rect rect = {0, 0, io->width, io->height};
+  SDL_UpdateTexture(
+    io->screen_texture,
+    &rect,
+    s_pixels,
+    io->width * sizeof(uint32_t)
+  );
+
+  SDL_FRect dst = {
+    0,
+    0,
+    io->width * SCALING_FACTOR,
+    io->height * SCALING_FACTOR
+  };
+
+  SDL_RenderClear(io->renderer);
+  SDL_RenderTexture(io->renderer, io->screen_texture, NULL, &dst);
 }
 
 void screenRenderPresent(IO* io) {
   SDL_RenderPresent(io->renderer);
-  io->texture = NULL;
 }
 
 int screenCleanup(IO* io) {
@@ -410,6 +444,10 @@ int IOPoll(IO* io) {
 
           case SDL_SCANCODE_N:
             result |= SHOULD_STEP;
+            break;
+
+          case SDL_SCANCODE_0:
+            result |= RESET;
             break;
 
           case SDL_SCANCODE_ESCAPE:

@@ -15,6 +15,16 @@ chip8-emulator -f <path-to-rom> [-dhnox]
 
 To clean the source tree run ``make clean``.
 
+You can pause and continue the emulation with the P button.
+The M button toggles step mode.
+With N you can advance one instruction when in step mode.
+The 0 button reset the emulator and the loaded rom will start from the beginning.
+
+When launching the emulator the pause mode is activated by default.
+
+If the debug mode is on (with the ``-d`` flag), all values shown will get updated after every instruction only if the step mode is also on.
+In the case that step mode is not active, the values of the Debug UI will only get updated after every instruction that needs drawing to the screen (0x00E0 or 0xD).
+
 Further planned features to practice before working on a GBA emulator include:
    - [x] A debugging interface with SDL3 (initial version working)
    - [x] Proper command line flag support

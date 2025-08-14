@@ -13,15 +13,13 @@
 
 typedef struct IO {
   // SDL Handling
-  SDL_Window *window;
-  SDL_Renderer *renderer;
-  SDL_Surface *surface;
-  SDL_Texture *texture;
+  SDL_Window* window;
+  SDL_Renderer* renderer;
+  SDL_Texture* screen_texture;
   SDL_Event event;
 
   // Font handling
   TTF_Font *font;
-  SDL_Texture* font_texture;
 
   uint8_t keys_pressed[16];
   int key_pressed;
@@ -52,7 +50,7 @@ int screenGetPosition(IO* io, int x, int y);
 int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos);
 int screenDrawDebugUI(IO* io, DebugInformation* info);
 int screenDrawRegs(IO* io, uint8_t* registers);
-int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory);
+int screenDrawInstrs(IO* io, uint16_t PC, uint8_t* memory);
 int screenDrawCallStack(IO* io, Stack* stack);
 int screenDrawGeneralInfo(IO* io, DebugInformation* info);
 
