@@ -134,7 +134,11 @@ int emulatorDraw(Emulator* emulator) {
       .regs = emulator->regs,
       .stack = emulator->call_stack,
       .PC = emulator->PC,
-      .I = emulator->I
+      .I = emulator->I,
+      .delay_timer = emulator->delay_timer,
+      .sound_timer = emulator->sound_timer,
+      .paused = emulator->paused,
+      .step_mode = emulator->step_mode
     };
 
     int result = screenDrawDebugUI(emulator->io, &info);

@@ -40,6 +40,10 @@ typedef struct DebugInformation {
   Stack* stack;
   uint16_t PC;
   uint16_t I;
+  uint8_t delay_timer;
+  uint8_t sound_timer;
+  uint8_t paused;
+  uint8_t step_mode;
 } DebugInformation;
 
 int screenInit(IO* io, int width, int height);
@@ -50,7 +54,7 @@ int screenDrawDebugUI(IO* io, DebugInformation* info);
 int screenDrawRegs(IO* io, uint8_t* registers);
 int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory);
 int screenDrawCallStack(IO* io, Stack* stack);
-int screendDrawGeneralInfo(IO* io, uint8_t* memory, uint16_t PC, uint16_t I);
+int screendDrawGeneralInfo(IO* io, DebugInformation* info);
 
 void screenDraw(IO* io, uint8_t pixels[]);
 void screenDrawRect(IO* io, int x, int y, int width, int height);

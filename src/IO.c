@@ -129,8 +129,8 @@ int screenDrawText(IO* io, const char* text, int len, SDL_FRect* pos) {
 
 int screenDrawRegs(IO* io, uint8_t* registers) {
   SDL_FRect r = {
-    (io->width + 9) * SCALING_FACTOR + 4,
-    SCALING_FACTOR + 2,
+    (io->width + 1) * SCALING_FACTOR,
+    SCALING_FACTOR,
     0,
     0
   };
@@ -141,6 +141,8 @@ int screenDrawRegs(IO* io, uint8_t* registers) {
 
   // VX: 0xVV --> 8 characters + 0 byte
   char reg[9];
+  int height_init = SCALING_FACTOR + 4;
+  r.y = height_init;
 
   for (int i = 0; i < NUMBER_REGS; i++) {
     if (i <= 7) {
@@ -150,7 +152,7 @@ int screenDrawRegs(IO* io, uint8_t* registers) {
     }
 
     if (i == 8) {
-      r.y = SCALING_FACTOR + 5;
+      r.y = height_init;
     }
 
     r.y += SCALING_FACTOR + 18;
@@ -169,9 +171,64 @@ int screenDrawRegs(IO* io, uint8_t* registers) {
     return ERROR;
 }
 
-int screendDrawGeneralInfo(IO* io, uint8_t* memory, uint16_t PC, uint16_t I) {
-  // TODO: implement me
+int screendDrawGeneralInfo(IO* io, DebugInformation* info) {
+  SDL_FRect r = {
+    SCALING_FACTOR,
+    (io->height + 1) * SCALING_FACTOR,
+    0,
+    0
+  };
+
+  if (screenDrawText(io, "General Info", 12, &r) != OK) {
+    goto error;
+  }
+
+  r.y += 4;
+  char text[32] = { 0 };
+
+  r.y += SCALING_FACTOR + 18;
+  snprintf(text, 11, "PC: 0x%04X", info->PC);
+  if (screenDrawText(io, text, 10, &r) != OK) {
+    goto error;
+  }
+
+  r.y += SCALING_FACTOR + 18;
+  snprintf(text, 10, "I: 0x%04X", info->I);
+  if (screenDrawText(io, text, 9, &r) != OK) {
+    goto error;
+  }
+
+  r.y += SCALING_FACTOR + 18;
+  snprintf(text, 18, "Delay Timer: %02d", info->delay_timer);
+  if (screenDrawText(io, text, 17, &r) != OK) {
+    goto error;
+  }
+
+  r.y += SCALING_FACTOR + 18;
+  snprintf(text, 16, "Sound Timer: %02d", info->sound_timer);
+  if (screenDrawText(io, text, 15, &r) != OK) {
+    goto error;
+  }
+
+  r.y += 3 * (SCALING_FACTOR + 18);
+  if (info->paused) {
+    if (screenDrawText(io, "Paused", 6, &r) != OK) {
+      goto error;
+    }
+  }
+
+  r.y += SCALING_FACTOR + 18;
+  if (info->step_mode) {
+    if (screenDrawText(io, "Step mode active", 16, &r) != OK) {
+      goto error;
+    }
+  }
+
   return OK;
+
+  error:
+    printf("Error: (screendDrawGeneralInfo) Couldn't draw Text.\n");
+    return ERROR;
 }
 
 int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory) {
@@ -204,7 +261,7 @@ int screenDrawDebugUI(IO* io, DebugInformation* info) {
     return ERROR;
   }
 
-  if (screendDrawGeneralInfo(io, info->memory, info->PC, info->I) != OK) {
+  if (screendDrawGeneralInfo(io, info) != OK) {
     printf("Error: (screenDrawDebugUI) Couldn't draw gen. info to screen.\n");
     return ERROR;
   }
