@@ -54,7 +54,7 @@ int screenDrawDebugUI(IO* io, DebugInformation* info);
 int screenDrawRegs(IO* io, uint8_t* registers);
 int screenDrawInstructions(IO* io, uint16_t PC, uint8_t* memory);
 int screenDrawCallStack(IO* io, Stack* stack);
-int screendDrawGeneralInfo(IO* io, DebugInformation* info);
+int screenDrawGeneralInfo(IO* io, DebugInformation* info);
 
 void screenDraw(IO* io, uint8_t pixels[]);
 void screenDrawRect(IO* io, int x, int y, int width, int height);

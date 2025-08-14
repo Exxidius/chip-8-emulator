@@ -25,7 +25,8 @@ int stackPop(Stack* stack) {
     return ERROR;
   }
 
-  uint16_t e = stack->data[stack->top_idx--];
+  uint16_t e = stack->data[stack->top_idx];
+  stack->data[stack->top_idx--] = 0;
 
   return e;
 }
