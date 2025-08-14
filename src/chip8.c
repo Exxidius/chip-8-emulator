@@ -72,7 +72,11 @@ int emulatorInit(Emulator* emulator, Options* cli_options) {
   emulator->sound_timer = 0;
 
   emulator->running = 1;
-  emulator->paused = 1;
+  if (cli_options->debug_active) {
+    emulator->paused = 1;
+  } else {
+    emulator->paused = 0;
+  }
   emulator->step_mode = 0;
   emulator->should_step = 0;
 
@@ -102,7 +106,11 @@ int emulatorReset(Emulator* emulator) {
   }
 
   emulator->running = 1;
-  emulator->paused = 1;
+  if (emulator->cli_options->debug_active) {
+    emulator->paused = 1;
+  } else {
+    emulator->paused = 0;
+  }
   emulator->step_mode = 0;
   emulator->should_step = 0;
 
@@ -144,20 +152,24 @@ int emulatorLoop(Emulator* emulator) {
     }
 
     if ((result & PAUSE) == PAUSE) {
-      emulator->paused = !emulator->paused;
-      // Need to display paused
-      if (emulatorDraw(emulator) != OK) {
-        printf("Error: (emulatorDraw) Could not draw to screen.\n");
-        return ERROR;
+      if (emulator->cli_options->debug_active) {
+        emulator->paused = !emulator->paused;
+        // Need to display paused
+        if (emulatorDraw(emulator) != OK) {
+          printf("Error: (emulatorDraw) Could not draw to screen.\n");
+          return ERROR;
+        }
       }
     }
 
     if ((result & STEP_MODE) == STEP_MODE) {
-      emulator->step_mode = !emulator->step_mode;
-      // Need to display step mode
-      if (emulatorDraw(emulator) != OK) {
-        printf("Error: (emulatorDraw) Could not draw to screen.\n");
-        return ERROR;
+      if (emulator->cli_options->debug_active) {
+        emulator->step_mode = !emulator->step_mode;
+        // Need to display step mode
+        if (emulatorDraw(emulator) != OK) {
+          printf("Error: (emulatorDraw) Could not draw to screen.\n");
+          return ERROR;
+        }
       }
     }
 

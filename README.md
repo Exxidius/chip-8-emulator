@@ -18,9 +18,11 @@ To clean the source tree run ``make clean``.
 You can pause and continue the emulation with the P button.
 The M button toggles step mode.
 With N you can advance one instruction when in step mode.
-The 0 button reset the emulator and the loaded rom will start from the beginning.
+Pause mode and step mode are only available when debug mode is active.
 
-When launching the emulator the pause mode is activated by default.
+The 0 button resets the emulator and the loaded rom will start from the beginning.
+
+When launching the emulator in debug mode, the pause mode is activated by default.
 
 If the debug mode is on (with the ``-d`` flag), all values shown will get updated after every instruction only if the step mode is also on.
 In the case that step mode is not active, the values of the Debug UI will only get updated after every instruction that needs drawing to the screen (0x00E0 or 0xD).
