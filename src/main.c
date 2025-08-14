@@ -1,7 +1,6 @@
 #include "stdio.h"
 #include "stdint.h"
 #include "stdlib.h"
-#include "string.h"
 #include "unistd.h"
 #include "ctype.h"
 
@@ -72,8 +71,14 @@ void parseOpts(int argc, char* argv[], Options* cli_options) {
     }
   }
 
+  // TODO: remove once implemented
+  if (sc_modern || sc_legacy || xo_chip) {
+    printf("Error: (parseOpts) Selected version not yet implemented.\n");
+    exit(ERROR);
+  }
+
   if (cli_options->rom_file == NULL) {
-    printf("Error: (main) No ROM to load supplied.\n");
+    printf("Error: (parseOpts) No ROM to load supplied.\n");
     exitPrintUsage();
   }
 }
