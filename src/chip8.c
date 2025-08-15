@@ -327,6 +327,7 @@ void emulatorHandleTimer(Emulator* emulator) {
   }
 
   if (emulator->sound_timer > 0) {
+    // TODO: currently no sound is played - add this
     emulator->sound_timer--;
   }
 }
