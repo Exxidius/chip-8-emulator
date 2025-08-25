@@ -492,14 +492,15 @@ int IOCheckKeyPressed(IO* io, uint8_t VX) {
 }
 
 int IOGetKeyPressed(IO* io) {
-  for (int i = 0; i <= 0xF; i++) {
-    // If the key we pressed before is the same as the last released
-    // we can return it to the user and continue with execution
-    if (io->key_pressed == io->key_released) {
-      io->key_pressed = -1;
-      return position_to_key[i];
-    }
+  // If the key we pressed before is the same as the last released
+  // we can return it to the user and continue with execution
+  if (io->key_pressed == io->key_released) {
+    int returnval = io->key_pressed;
+    io->key_pressed = -1;
+    return returnval;
+  }
 
+  for (int i = 0; i <= 0xF; i++) {
     if (io->keys_pressed[i] == 1) {
       io->key_pressed = position_to_key[i];
     }
