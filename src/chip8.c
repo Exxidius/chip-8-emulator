@@ -136,7 +136,7 @@ int emulatorLoop(Emulator* emulator) {
 
       SDL_Delay((float)1000 / INSTRUCTIONS_FREQUENCY);
 
-      if (emulator->step_mode) {
+      if (emulator->step_mode && emulator->should_step) {
         if (emulatorDraw(emulator) != OK) {
           printf("Error: (emulatorDraw) Could not draw to screen.\n");
           return ERROR;
